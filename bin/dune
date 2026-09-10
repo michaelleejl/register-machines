@@ -1,0 +1,4 @@
+(executable
+ (public_name urm)
+ (name main)
+ (libraries register_machines cmdliner))
