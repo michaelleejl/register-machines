@@ -1,7 +1,10 @@
 {
-open Parser 
+open Parser
+open Error 
 
-exception Error of Span.t * char
+exception Fault of Error.error
+
+let span lexbuf = Span.of_loc (lexbuf.Lexing.lex_start_p, lexbuf.Lexing.lex_curr_p)
 }
 
 rule token = parse
@@ -18,4 +21,5 @@ rule token = parse
   | ":"                   { COLON }
   | ","                   { COMMA }
   | eof                   { EOF }
-  | _ as c                { raise (Error (Span.of_loc (lexbuf.lex_start_p, lexbuf.lex_curr_p), c)) }
+  | ['L' 'R'] as c        { raise (Fault (Missing_index { at = span lexbuf; letter = c })) }
+  | _ as c                { raise (Fault (Unexpected_character { at = span lexbuf; character = c })) }

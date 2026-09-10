@@ -1,13 +1,14 @@
 type error =
   | Unexpected_character of { at : Span.t; character : char }
   | Syntax_error of { at : Span.t }
+  | Missing_index of { at : Span.t; letter : char }
   | Duplicate_register of { at : Span.t; first : Span.t; index : int }
   | Undeclared_register of { at : Span.t; index : int; count : int }
   | Mislabelled of { at : Span.t; written : int; expected : int }
   | Undefined_label of { at : Span.t; target : int; count : int }
 
 let at = function
-  | Unexpected_character { at; _ } | Syntax_error { at } | Duplicate_register { at; _ }
+  | Unexpected_character { at; _ } | Syntax_error { at } | Missing_index { at; _ } | Duplicate_register { at; _ }
   | Undeclared_register { at; _ } | Mislabelled { at; _ } | Undefined_label { at; _ } -> at
 
 let where (p : Lexing.position) =
@@ -17,6 +18,8 @@ let message = function
   | Unexpected_character { character; _ } ->
     Printf.sprintf "unrecognised character %C" character
   | Syntax_error _ -> "this token is out of place"
+  | Missing_index { letter; _ } ->
+    Printf.sprintf "%c must be followed by a number" letter
   | Duplicate_register { index; _ } ->
     Printf.sprintf "R%d is given an initial value twice" index
   | Undeclared_register { index; _ } -> Printf.sprintf "R%d is not a register" index
@@ -27,6 +30,7 @@ let message = function
 let label = function
   | Unexpected_character _ -> "remove it"
   | Syntax_error _ -> "not expected here"
+  | Missing_index { letter; _ } -> Printf.sprintf "write %c0, %c1, and so on" letter letter
   | Duplicate_register _ -> "given again here"
   | Undeclared_register { count; _ } ->
     Printf.sprintf "this machine has R0 to R%d" (count - 1)

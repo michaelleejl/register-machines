@@ -47,7 +47,6 @@ let interpret bound verbose file =
           else Table.last traced in
           print_string (Table.to_string table)
       | Error errors -> fail errors)
-  | exception Lexer.Error (at, character) ->
-      fail [ Error.Unexpected_character { at; character } ]
+  | exception Lexer.Fault error -> fail [ error ]
   | exception Parser.Error ->
       fail [ Error.Syntax_error { at = Span.of_loc (buffer.lex_start_p, buffer.lex_curr_p) } ]
