@@ -16,7 +16,7 @@ rule token = parse
   | ('l'|'L')(digit+ as i)      { LABEL (int_of_string i) }
   | "(*"                        { comment (span lexbuf) 0 lexbuf; token lexbuf }
   | "->"                        { ARROW }
-  | "="                         { EQUALS }
+  | ":="                        { COLONEQUAL }
   | "+"                         { PLUS }
   | "-"                         { MINUS }
   | "HALT"|"halt"               { HALT }

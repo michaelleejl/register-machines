@@ -2,7 +2,7 @@
 %token <string> REGISTER 
 %token <int> LABEL 
 %token ARROW 
-%token EQUALS
+%token COLONEQUAL
 %token PLUS 
 %token MINUS 
 %token HALT 
@@ -21,7 +21,7 @@ declrs:
   | nonempty_list(declr) {$1}
 
 declr:
-  | r=REGISTER ; EQUALS ; v= INTEGER
+  | r=REGISTER ; COLONEQUAL ; v= INTEGER
     { Source.{ name = located $loc(r) r; value = v } }
 
 instrs:

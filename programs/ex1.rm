@@ -1,8 +1,8 @@
 (* Example 1, Page 18, Section 2.1 *)
 
-R0 = 0 
-R1 = 1
-R2 = 2 
+R0 := 0 
+R1 := 1
+R2 := 2 
 
 L0 : R1- -> L1, L2
 L1 : R0+ -> L0 
