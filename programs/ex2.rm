@@ -1,0 +1,12 @@
+(* Example 3, Page 20, Section 2.1 *)
+D := 0 
+S := 6 
+T := 0
+
+L0 : D- -> L0, L1 
+L1 : S- -> L2, L4 
+L2 : D+ -> L3 
+L3 : T+ -> L1 
+L4 : T- -> L5, L6
+L5 : S+ -> L4 
+L6 : HALT
