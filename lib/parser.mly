@@ -1,5 +1,5 @@
 %token <int> INTEGER 
-%token <int> REGISTER 
+%token <string> REGISTER 
 %token <int> LABEL 
 %token ARROW 
 %token EQUALS
@@ -18,14 +18,14 @@ main:
   | ds = declrs ; is = instrs ; EOF { Source.SCfg (ds, is) }
 
 declrs:
-  | nonempty_list(declr) {Iarray.of_list $1}
+  | nonempty_list(declr) {$1}
 
 declr:
   | r=REGISTER ; EQUALS ; v= INTEGER
-    { Source.{ index = located $loc(r) r; value = v } }
+    { Source.{ name = located $loc(r) r; value = v } }
 
 instrs:
-  | nonempty_list(instr) {Iarray.of_list $1}
+  | nonempty_list(instr) {$1}
 
 instr:
   | l=LABEL ; COLON ; r=REGISTER ; PLUS; ARROW; t=LABEL

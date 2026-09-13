@@ -1,0 +1,6 @@
+(* Page 19, Section 2.1 *)
+
+R0 = 0 
+
+L0 : R0+ -> L0
+L1 : HALT

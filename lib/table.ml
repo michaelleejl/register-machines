@@ -4,14 +4,9 @@ let row (s : State.t) =
   Printf.sprintf "L%d" s.label
   :: List.map string_of_int (Iarray.to_list s.registers)
 
-let all states =
+let all names states =
   let rows = List.of_seq (Seq.map row states) in
-  let headings =
-    match rows with
-    | [] -> []
-    | first :: _ ->
-      "Label" :: List.mapi (fun i _ -> Printf.sprintf "R%d" i) (List.tl first)
-  in
+  let headings = match rows with [] -> [] | _ -> "Label" :: Iarray.to_list names in
   { headings; rows }
 
 let last states =

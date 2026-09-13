@@ -6,8 +6,8 @@ type 'a located = {
 let located loc v = { at = Span.of_loc loc; v }
 
 type body =
- | SAdd of int located * int located
- | SSub of int located * int located * int located
+ | SAdd of string located * int located
+ | SSub of string located * int located * int located
  | SHalt
 
 type instr = {
@@ -16,8 +16,8 @@ type instr = {
 }
 
 type register = {
-  index : int located;
-  value : int
+  name : string located;
+  value : int;
 }
 
-type config = SCfg of register iarray * instr iarray
+type config = SCfg of register list * instr list

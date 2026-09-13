@@ -3,4 +3,4 @@ type expr =
  | TSub of int * int * int
  | THalt 
 
-type config = TCfg of int iarray * expr iarray
+type config = TCfg of (int*string) iarray * expr iarray

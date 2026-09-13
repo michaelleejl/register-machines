@@ -27,9 +27,9 @@ let eval initial instrs =
 let run prog bound =
   elaborate prog
   |> Result.map (fun (TCfg (registers, instrs)) ->
-       match bound with
-       | None -> eval registers instrs
-       | Some b -> eval registers instrs |> take b)
+       let trace = eval (Iarray.map fst registers) instrs in
+       (Iarray.map snd registers,
+        match bound with None -> trace | Some b -> take b trace))
 
 let interpret bound verbose file =
   let source = In_channel.with_open_text file In_channel.input_all in
@@ -42,8 +42,8 @@ let interpret bound verbose file =
   match Parser.main Lexer.token buffer with
   | prog -> (
       match run prog bound with
-      | Ok traced ->
-          let table = if verbose then Table.all traced
+      | Ok (names, traced) ->
+          let table = if verbose then Table.all names traced
           else Table.last traced in
           print_string (Table.to_string table)
       | Error errors -> fail errors)
