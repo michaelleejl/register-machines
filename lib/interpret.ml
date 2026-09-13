@@ -26,10 +26,9 @@ let eval initial instrs =
 
 let run prog bound =
   elaborate prog
-  |> Result.map (fun (TCfg (registers, instrs)) ->
-       let trace = eval (Iarray.map fst registers) instrs in
-       (Iarray.map snd registers,
-        match bound with None -> trace | Some b -> take b trace))
+  |> Result.map (fun (TCfg (values, names, instrs)) ->
+       let trace = eval values instrs in
+       (names, match bound with None -> trace | Some b -> take b trace))
 
 let interpret bound verbose file =
   let source = In_channel.with_open_text file In_channel.input_all in

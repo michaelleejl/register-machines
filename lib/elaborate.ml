@@ -73,7 +73,7 @@ let extract_registers declarations =
   (maps, errors)
 
 type elaboration_state = {
-  i: int; 
+  position: int; 
   errors: error list; 
   exprs: expr list; 
 }
@@ -95,13 +95,13 @@ let undefined_label num_labels (({errors; _} as st), instr) =
   in
   {st with errors}, instr
 
-let mislabelled (({i; errors; exprs} as st), instr) = 
-  if instr.label.v = i then st, instr
+let mislabelled (({position; errors; exprs} as st), instr) = 
+  if instr.label.v = position then st, instr
   else 
     let err = Mislabelled { 
       at = instr.label.at; 
       written = instr.label.v; 
-      expected = i 
+      expected = position 
     } in 
     {st with errors = err::errors}, instr
 
@@ -120,7 +120,7 @@ let translate maps (({errors; exprs; _} as st), instr) =
       }
   in {st with errors = err::errors}, instr
 
-let next (st, _) = {st with i=st.i+1} 
+let next (st, _) = {st with position=st.position+1} 
 
 let extract_instr maps num_labels = 
   fun st -> fun instr ->
@@ -129,15 +129,14 @@ let extract_instr maps num_labels =
     |> undefined_label num_labels 
     |> next 
 
-let (<&>) f g = fun x -> (f x, g x)
-
 let elaborate (SCfg (declared, instrs)) =
   let maps, duplicates = extract_registers declared in
-  let registers = Iarray.init (Var.count maps) (Var.value maps <&> Var.decode maps) in 
+  let values = Iarray.init (Var.count maps) (Var.value maps) in 
+  let names = Iarray.init (Var.count maps) (Var.decode maps) in 
   let num_instructions = List.length instrs in  
   let extractor = extract_instr maps num_instructions in 
-  let initial = {i=0;exprs=[];errors=duplicates} in 
+  let initial = {position=0;exprs=[];errors=duplicates} in 
   let {errors;exprs} = List.fold_left extractor initial instrs in 
   match errors with
-  | [] -> Ok (TCfg (registers, Iarray.of_list (List.rev exprs)))
+  | [] -> Ok (TCfg (values, names, Iarray.of_list (List.rev exprs)))
   | errors -> Error (List.rev errors)
