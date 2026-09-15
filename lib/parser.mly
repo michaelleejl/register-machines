@@ -1,3 +1,7 @@
+%{
+open Located
+%}
+
 %token <int> INTEGER 
 %token <string> IDENT
 %token ARROW

@@ -1,4 +1,4 @@
-open Linear
+open Located
 open Error
 
 module StringMap = Map.Make(String)
