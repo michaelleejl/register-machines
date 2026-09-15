@@ -1,4 +1,4 @@
-type expr = 
+type instr = 
  | TAdd of int * int 
  | TSub of int * int * int
  | THalt 
@@ -6,5 +6,5 @@ type expr =
 type config = {
   register_values: int iarray;
   register_names: string iarray;
-  instrs: expr iarray
+  instrs: instr iarray
 }

@@ -7,6 +7,9 @@ type error =
   | Mislabelled of { at : Span.t; written : int; expected : int }
   | Undefined_label of { at : Span.t; target : int; count : int }
   | Unterminated_comment of { at : Span.t; }
+
+exception Fault of error
+
 let at = function
   | Unexpected_character { at; _ } | Syntax_error { at } 
   | Missing_index { at; _ } | Duplicate_register { at; _ }

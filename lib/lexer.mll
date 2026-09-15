@@ -1,8 +1,6 @@
 {
 open Parser
-open Error 
-
-exception Fault of Error.error
+open Error
 
 let span lexbuf = Span.of_loc (lexbuf.Lexing.lex_start_p, lexbuf.Lexing.lex_curr_p)
 }

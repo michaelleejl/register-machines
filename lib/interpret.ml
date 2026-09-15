@@ -2,10 +2,7 @@ open Elaborate
 open Source
 open Target 
 open Seq
-
-type _ mode = 
-  | Trace: (string iarray * State.t Seq.t) mode 
-  | Value: int mode 
+open Mode 
 
 let update r f registers =
     Iarray.mapi (fun i v -> if i = r then f v else v) registers
@@ -28,45 +25,13 @@ let eval initial instrs =
   in
   go initial 0
 
-let run: type a. a mode -> Source.config -> int option -> int iarray -> (a, Error.error list) result = 
+let run: type a. a mode -> Source.config -> int option -> int iarray -> a =
 fun mode prog bound override ->
-    match elaborate prog override with 
-    | Error errors -> Error errors 
-    | Ok { register_values; register_names; instrs } ->
+    let { register_values; register_names; instrs } = elaborate prog override in
       let states = eval register_values instrs in
         let states = match bound with None -> states | Some b -> Seq.take (b + 1) states in
         match mode with
-        | Trace -> Ok (register_names, states)
+        | Trace -> (register_names, states)
         | Value ->
-            Ok (Seq.fold_left (fun _ (s : State.t) -> Iarray.get s.registers 0)
-                  (Iarray.get register_values 0) states)
-
-let interpret bound verbose file override =
-  let source = In_channel.with_open_text file In_channel.input_all in
-  let buffer = Lexing.from_string source in
-  Lexing.set_filename buffer file;
-  let fail errors =
-    List.iter (fun e -> prerr_string (Report.render ~source e); prerr_newline ()) errors;
-    exit 1
-  in
-  match Parser.main Lexer.token buffer with
-  | prog -> (
-      if verbose then 
-        (match run Trace prog bound override with
-        | Ok (names, traced) ->
-            if verbose then Table.all names traced |> 
-                            Table.to_string |>
-                            print_string
-            else (
-              match Seq.fold_left (fun _ s -> Some s) None traced with
-              | None -> ()
-              | Some (s : State.t) -> Printf.printf "%d\n" (Iarray.get s.registers 0))
-        | Error errors -> fail errors)
-      else 
-        match run Value prog bound override with 
-        | Ok (v) -> Printf.printf "%d\n" v 
-        | Error errors -> fail errors
-    )
-  | exception Lexer.Fault error -> fail [ error ]
-  | exception Parser.Error ->
-      fail [ Error.Syntax_error { at = Span.of_loc (buffer.lex_start_p, buffer.lex_curr_p) } ]
+            Seq.fold_left (fun _ (s : State.t) -> Iarray.get s.registers 0)
+                  (Iarray.get register_values 0) states
