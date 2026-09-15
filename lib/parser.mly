@@ -15,7 +15,7 @@
 %%
 
 main:
-  | ds = declrs ; is = instrs ; EOF { Source.SCfg (ds, is) }
+  | ds = declrs ; is = instrs ; EOF { Source.{ registers = ds; instrs = is } }
 
 declrs:
   | nonempty_list(declr) {$1}

@@ -1,80 +1,21 @@
 open Source
 open Target
-open Error 
+open Error
 
-
-module StringMap = Map.Make(String)
-module IntMap = Map.Make(Int)
-
-
-module Var = struct 
-
-  type maps = {
-    encoding: int StringMap.t;
-    decoding: string IntMap.t;
-    values: int IntMap.t; 
-    firsts: Span.t StringMap.t;
-    max: int 
-  }
-
-  let initial = {
-    encoding = StringMap.empty; 
-    decoding = IntMap.empty; 
-    values = IntMap.empty; 
-    firsts = StringMap.empty;
-    max = 0;
-  }
-
-  exception Duplicate of Span.t
-  exception Undefined of string located 
-  
-  let register {encoding; decoding; firsts; values; max} name value = 
-    match StringMap.find_opt name.v encoding with 
-    | Some(_) -> 
-      let first = StringMap.find name.v firsts in
-      raise (Duplicate first) 
-    | None -> 
-        let id = max in 
-        let encoding' = StringMap.add name.v id encoding in 
-        let firsts' = StringMap.add name.v name.at firsts in 
-        let decoding' = IntMap.add id name.v decoding in 
-        let values' = IntMap.add id value values in 
-        {
-          encoding=encoding'; 
-          firsts = firsts';
-          decoding = decoding';
-          values = values';
-          max = id + 1
-        }
-
-    let encode {encoding} name = 
-      try StringMap.find name.v encoding
-      with Not_found -> raise (Undefined name)  
-
-    let decode {decoding} id = 
-      IntMap.find id decoding 
-    
-    let value {values} id = 
-      IntMap.find id values 
-
-    let count {max} = max
-
-    let names {decoding} = List.map snd (IntMap.bindings decoding)
-end 
 
 let extract_registers declarations overrides =
-  let l = Iarray.length overrides in 
-  let extract (i, maps, errors) {name; value} =
-    let v = 
-      if i = 0 then value else 
-      if l <= (i-1) then value else Iarray.get overrides (i-1) in 
-    try (i+1, Var.register maps name v, errors) with 
-    | Var.Duplicate first -> 
-      let error = Duplicate_register { at = name.at; first; name = name.v } in 
-      (i+1, maps, error::errors)
+  let l = Iarray.length overrides in
+  let extract (i, maps, values, errors) {name; value} =
+    let v =
+      if i = 0 then value else
+      if l <= (i-1) then value else Iarray.get overrides (i-1) in
+    try (i+1, Var.register maps name, v::values, errors) with
+    | Var.Duplicate first ->
+      let error = Duplicate_register { at = name.at; first; name = name.v } in
+      (i+1, maps, values, error::errors)
   in
-  let _, maps, errors = List.fold_left extract (0, Var.initial, []) declarations in
-  (maps, errors)
+  let _, maps, values, errors = List.fold_left extract (0, Var.initial, [], []) declarations in
+  (maps, Iarray.of_list (List.rev values), errors)
 
 type elaboration_state = {
   position: int; 
@@ -133,14 +74,13 @@ let extract_instr maps num_labels =
     |> undefined_label num_labels 
     |> next 
 
-let elaborate (SCfg (declared, instrs)) override =
-  let maps, duplicates = extract_registers declared override in
-  let values = Iarray.init (Var.count maps) (Var.value maps) in 
-  let names = Iarray.init (Var.count maps) (Var.decode maps) in 
+let elaborate ({registers; instrs} : Source.config) override =
+  let maps, register_values, duplicates = extract_registers registers override in
+  let register_names = Iarray.init (Var.count maps) (Var.decode maps) in
   let num_instructions = List.length instrs in  
   let extractor = extract_instr maps num_instructions in 
   let initial = {position=0;exprs=[];errors=duplicates} in 
   let {errors;exprs} = List.fold_left extractor initial instrs in 
   match errors with
-  | [] -> Ok (TCfg (values, names, Iarray.of_list (List.rev exprs)))
+  | [] -> Ok { register_values; register_names; instrs = Iarray.of_list (List.rev exprs) }
   | errors -> Error (List.rev errors)

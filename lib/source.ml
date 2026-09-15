@@ -20,4 +20,7 @@ type register = {
   value : int;
 }
 
-type config = SCfg of register list * instr list
+type config = {
+  registers: register list;
+  instrs: instr list
+}

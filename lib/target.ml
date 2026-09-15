@@ -3,4 +3,8 @@ type expr =
  | TSub of int * int * int
  | THalt 
 
-type config = TCfg of int iarray * string iarray * expr iarray
+type config = {
+  register_values: int iarray;
+  register_names: string iarray;
+  instrs: expr iarray
+}

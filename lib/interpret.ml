@@ -32,14 +32,14 @@ let run: type a. a mode -> Source.config -> int option -> int iarray -> (a, Erro
 fun mode prog bound override ->
     match elaborate prog override with 
     | Error errors -> Error errors 
-    | Ok(TCfg (values, names, instrs)) -> 
-      let states = eval values instrs in
+    | Ok { register_values; register_names; instrs } ->
+      let states = eval register_values instrs in
         let states = match bound with None -> states | Some b -> Seq.take (b + 1) states in
         match mode with
-        | Trace -> Ok (names, states)
+        | Trace -> Ok (register_names, states)
         | Value ->
             Ok (Seq.fold_left (fun _ (s : State.t) -> Iarray.get s.registers 0)
-                  (Iarray.get values 0) states)
+                  (Iarray.get register_values 0) states)
 
 let interpret bound verbose file override =
   let source = In_channel.with_open_text file In_channel.input_all in
