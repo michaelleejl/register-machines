@@ -2,7 +2,7 @@
 open Located
 type item =
   | Definition of Source.defn
-  | Register of Linear.register
+  | Register of Definitional.register
 
 let split items = 
   List.fold_left
@@ -58,7 +58,7 @@ defn:
 
 register:
   | r = IDENT ; COLONEQUAL ; v = INTEGER
-    { Linear.{ name = located $loc(r) r; value = v } }
+    { Definitional.{ name = located $loc(r) r; value = v } }
 
 instrs:
   | nonempty_list(instr) {$1}

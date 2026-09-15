@@ -1,4 +1,4 @@
-open Linear
+open Definitional
 open Target
 open Error
 
@@ -22,18 +22,18 @@ let translate registers labels instr =
   let register r = Var.encode registers r in
   let label l = Var.encode labels l in
   match instr.body with
-  | LAdd (r, t) ->
+  | DAdd (r, t) ->
     let r = register r in
     let t = label t in
     TAdd (r, t)
-  | LSub (r, t, f) ->
+  | DSub (r, t, f) ->
     let r = register r in
     let t = label t in
     let f = label f in
     TSub (r, t, f)
-  | LHalt -> THalt
+  | DHalt -> THalt
 
-let elaborate ({registers; instrs} : Linear.config) override =
+let elaborate ({registers; instrs} : Definitional.config) override =
   let register_maps, register_values = extract_registers registers override in
   let label_maps = extract_labels instrs in
   let register_names = Iarray.init (Var.count register_maps) (Var.decode register_maps) in

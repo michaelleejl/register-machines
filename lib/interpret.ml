@@ -1,5 +1,5 @@
 open Elaborate
-open Linear
+open Definitional
 open Target 
 open Seq
 open Mode 
@@ -25,7 +25,7 @@ let eval initial instrs =
   in
   go initial 0
 
-let run: type a. a mode -> Linear.config -> int option -> int iarray -> a =
+let run: type a. a mode -> Definitional.config -> int option -> int iarray -> a =
 fun mode prog bound override ->
     let ({ register_values; instrs; _ } as machine) = elaborate prog override in
       let states = eval register_values instrs in

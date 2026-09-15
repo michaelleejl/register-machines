@@ -1,9 +1,9 @@
 open Located
 
 type body =
- | LAdd of string located * string located
- | LSub of string located * string located * string located
- | LHalt
+ | DAdd of string located * string located
+ | DSub of string located * string located * string located
+ | DHalt
 
 type instr = {
   label : string located ;

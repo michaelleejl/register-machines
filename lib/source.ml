@@ -12,7 +12,7 @@ type instr = {
 
 type program = {
   definitions: defn list;
-  registers: Linear.register list;
+  registers: Definitional.register list;
   instrs: instr list
 }
 and defn = {
