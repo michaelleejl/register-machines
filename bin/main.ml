@@ -27,14 +27,10 @@ let run bound verbose file override =
   try
     let prog = Linearise.program (Parse.program file source) in
       if verbose then
-        (let (machine, traced) = Interpret.run Trace prog bound override in
-            if verbose then Table.all machine traced |>
-                            Table.to_string |>
-                            print_string
-            else (
-              match Seq.fold_left (fun _ s -> Some s) None traced with
-              | None -> ()
-              | Some (s : State.t) -> Printf.printf "%d\n" (Iarray.get s.registers 0)))
+        let (machine, traced) = Interpret.run Trace prog bound override in
+          Table.all machine traced |>
+          Table.to_string |>
+          print_string
       else
         Printf.printf "%d\n" (Interpret.run Value prog bound override)
   with
