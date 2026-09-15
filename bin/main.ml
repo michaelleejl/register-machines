@@ -12,11 +12,15 @@ let bound =
 let file = 
   Arg.(required & pos 0 (some file) None & info [] ~docv:"FILE")
 
-let run bound verbose file = 
-  Interpret.interpret bound verbose file 
+let override = 
+  let doc = "Initial value of the $(i,n)th declared register, overriding the value in $(b,FILE)." in 
+  Arg.(value & pos_right 0 int [] & info [] ~docv:"VALUE" ~doc)
+
+let run bound verbose file override = 
+  Interpret.interpret bound verbose file (Iarray.of_list override)
 
 let cmd = 
   let info = Cmd.info "urm" ~version:"0.1.0" in
-  Cmd.v info Term.(const run $ bound $ verbose $ file)
+  Cmd.v info Term.(const run $ bound $ verbose $ file $ override)
 
 let () = exit (Cmd.eval cmd)

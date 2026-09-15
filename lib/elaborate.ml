@@ -62,14 +62,18 @@ module Var = struct
     let names {decoding} = List.map snd (IntMap.bindings decoding)
 end 
 
-let extract_registers declarations =
-  let extract (maps, errors) {name; value} =
-    try (Var.register maps name value, errors) with 
+let extract_registers declarations overrides =
+  let l = Iarray.length overrides in 
+  let extract (i, maps, errors) {name; value} =
+    let v = 
+      if i = 0 then value else 
+      if l <= (i-1) then value else Iarray.get overrides (i-1) in 
+    try (i+1, Var.register maps name v, errors) with 
     | Var.Duplicate first -> 
       let error = Duplicate_register { at = name.at; first; name = name.v } in 
-      (maps, error::errors)
+      (i+1, maps, error::errors)
   in
-  let maps, errors = List.fold_left extract (Var.initial, []) declarations in
+  let _, maps, errors = List.fold_left extract (0, Var.initial, []) declarations in
   (maps, errors)
 
 type elaboration_state = {
@@ -129,8 +133,8 @@ let extract_instr maps num_labels =
     |> undefined_label num_labels 
     |> next 
 
-let elaborate (SCfg (declared, instrs)) =
-  let maps, duplicates = extract_registers declared in
+let elaborate (SCfg (declared, instrs)) override =
+  let maps, duplicates = extract_registers declared override in
   let values = Iarray.init (Var.count maps) (Var.value maps) in 
   let names = Iarray.init (Var.count maps) (Var.decode maps) in 
   let num_instructions = List.length instrs in  
