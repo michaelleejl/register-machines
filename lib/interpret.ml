@@ -27,11 +27,11 @@ let eval initial instrs =
 
 let run: type a. a mode -> Source.config -> int option -> int iarray -> a =
 fun mode prog bound override ->
-    let { register_values; register_names; instrs } = elaborate prog override in
+    let ({ register_values; instrs; _ } as machine) = elaborate prog override in
       let states = eval register_values instrs in
         let states = match bound with None -> states | Some b -> Seq.take (b + 1) states in
         match mode with
-        | Trace -> (register_names, states)
+        | Trace -> (machine, states)
         | Value ->
             Seq.fold_left (fun _ (s : State.t) -> Iarray.get s.registers 0)
                   (Iarray.get register_values 0) states

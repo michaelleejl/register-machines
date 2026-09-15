@@ -1,38 +1,38 @@
 %token <int> INTEGER 
-%token <string> REGISTER 
-%token <int> LABEL 
-%token ARROW 
+%token <string> IDENT
+%token ARROW
 %token COLONEQUAL
-%token PLUS 
-%token MINUS 
-%token HALT 
+%token PLUS
+%token MINUS
+%token HALT
 %token COLON
 %token COMMA
-%token EOF 
+%token EOF
 
-%start <Source.config> main 
+%start <Source.config> main
 
 %%
 
 main:
-  | ds = declrs ; is = instrs ; EOF { Source.{ registers = ds; instrs = is } }
+  | ds = declrs ; is = instrs ; EOF { Source.{ registers = List.rev ds; instrs = is } }
 
 declrs:
-  | nonempty_list(declr) {$1}
+  | d = declr { [ d ] }
+  | ds = declrs ; d = declr { d :: ds }
 
 declr:
-  | r=REGISTER ; COLONEQUAL ; v= INTEGER
+  | r=IDENT ; COLONEQUAL ; v= INTEGER
     { Source.{ name = located $loc(r) r; value = v } }
 
 instrs:
   | nonempty_list(instr) {$1}
 
 instr:
-  | l=LABEL ; COLON ; r=REGISTER ; PLUS; ARROW; t=LABEL
+  | l=IDENT ; COLON ; r=IDENT ; PLUS; ARROW; t=IDENT
       { Source.{ label = located $loc(l) l;
                  body = SAdd (located $loc(r) r, located $loc(t) t) } }
-  | l=LABEL ; COLON ; r=REGISTER ; MINUS; ARROW; t=LABEL ; COMMA; f=LABEL
+  | l=IDENT ; COLON ; r=IDENT ; MINUS; ARROW; t=IDENT ; COMMA; f=IDENT
       { Source.{ label = located $loc(l) l;
                  body = SSub (located $loc(r) r, located $loc(t) t, located $loc(f) f) } }
-  | l=LABEL ; COLON ; HALT
+  | l=IDENT ; COLON ; HALT
       { Source.{ label = located $loc(l) l; body = SHalt } }

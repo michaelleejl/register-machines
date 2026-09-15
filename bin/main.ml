@@ -27,8 +27,8 @@ let run bound verbose file override =
   try
     let prog = Parse.program file source in
       if verbose then
-        (let (names, traced) = Interpret.run Trace prog bound override in
-            if verbose then Table.all names traced |>
+        (let (machine, traced) = Interpret.run Trace prog bound override in
+            if verbose then Table.all machine traced |>
                             Table.to_string |>
                             print_string
             else (

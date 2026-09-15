@@ -6,5 +6,6 @@ type instr =
 type config = {
   register_values: int iarray;
   register_names: string iarray;
+  label_names: string iarray;
   instrs: instr iarray
 }

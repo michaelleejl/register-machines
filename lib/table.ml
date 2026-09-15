@@ -1,18 +1,18 @@
 type t = { headings : string list; rows : string list list }
 
-let row (s : State.t) =
-  Printf.sprintf "L%d" s.label
+let row (machine : Target.config) (s : State.t) =
+  Iarray.get machine.label_names s.label
   :: List.map string_of_int (Iarray.to_list s.registers)
 
-let all names states =
-  let rows = List.of_seq (Seq.map row states) in
-  let headings = match rows with [] -> [] | _ -> "Label" :: Iarray.to_list names in
+let all (machine : Target.config) states =
+  let rows = List.of_seq (Seq.map (row machine) states) in
+  let headings = match rows with [] -> [] | _ -> "Label" :: Iarray.to_list machine.register_names in
   { headings; rows }
 
-let last states =
+let last machine states =
   match Seq.fold_left (fun _ s -> Some s) None states with
   | None -> { headings = []; rows = [] }
-  | Some s -> { headings = []; rows = [ row s ] }
+  | Some s -> { headings = []; rows = [ row machine s ] }
 
 let column_widths { headings; rows } =
   match if headings = [] then rows else headings :: rows with

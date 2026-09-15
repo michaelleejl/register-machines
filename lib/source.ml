@@ -6,12 +6,12 @@ type 'a located = {
 let located loc v = { at = Span.of_loc loc; v }
 
 type body =
- | SAdd of string located * int located
- | SSub of string located * int located * int located
+ | SAdd of string located * string located
+ | SSub of string located * string located * string located
  | SHalt
 
 type instr = {
-  label : int located ;
+  label : string located ;
   body : body ;
 }
 
