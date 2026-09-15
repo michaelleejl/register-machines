@@ -11,6 +11,12 @@ type instr = {
 }
 
 type program = {
+  definitions: defn list;
   registers: Linear.register list;
   instrs: instr list
+}
+and defn = {
+  name : string located;
+  parameters: string located list; 
+  program : program;
 }

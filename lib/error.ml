@@ -7,13 +7,15 @@ type error =
   | Duplicate of { kind : kind; at : Span.t; first : Span.t; name : string }
   | Undeclared of { kind : kind; at : Span.t; name : string; declared : string list }
   | Unterminated_comment of { at : Span.t; }
+  | No_registers of { at : Span.t }
 
 exception Fault of error
 
 let at = function
   | Unexpected_character { at; _ } | Syntax_error { at }
   | Missing_index { at; _ } | Duplicate { at; _ }
-  | Undeclared { at; _ } | Unterminated_comment {at; _} -> at
+  | Undeclared { at; _ } | Unterminated_comment {at; _}
+  | No_registers { at } -> at
 let where (p : Lexing.position) =
   Printf.sprintf "%s:%d:%d" p.pos_fname p.pos_lnum (p.pos_cnum - p.pos_bol + 1)
 
@@ -29,6 +31,7 @@ let message = function
   | Undeclared { kind = Register; name; _ } -> Printf.sprintf "%s is not a register" name
   | Undeclared { kind = Label; name; _ } -> Printf.sprintf "%s is not a label" name
   | Unterminated_comment _ -> "this comment is never closed"
+  | No_registers _ -> "this machine has no registers"
 
 let label = function
   | Unexpected_character _ -> "remove it"
@@ -41,6 +44,7 @@ let label = function
   | Undeclared { kind = Label; declared; _ } ->
     Printf.sprintf "this machine has labels: %s" (String.concat ", " declared)
   | Unterminated_comment _ -> "opened here"
+  | No_registers _ -> "declare a register above this instruction"
 
 let note = function
   | Duplicate { kind = Register; first; _ } -> Some ("first given here", first)

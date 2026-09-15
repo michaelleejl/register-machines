@@ -6,6 +6,7 @@ let span lexbuf = Span.of_loc (lexbuf.Lexing.lex_start_p, lexbuf.Lexing.lex_curr
 }
 
 let lower = ['a'-'z']
+let upper = ['A'-'Z']
 let alpha = ['a'-'z' 'A'-'Z']
 let digit = ['0'-'9']
 
@@ -18,10 +19,17 @@ rule token = parse
   | "+"                         { PLUS }
   | "-"                         { MINUS }
   | "halt"                      { HALT }
+  | "machine"                   { MACHINE }
+  | "struct"                    { STRUCT }
+  | "end"                       { END }
   | (lower (alpha|digit)*) as s { IDENT s }
+  | (upper (alpha|digit)*) as s { NAME s }
   | ['0'-'9']+ as i             { INTEGER (int_of_string i)}
   | ":"                         { COLON }
   | ","                         { COMMA }
+  | "="                         { EQUAL }
+  | "("                         { LPAREN }
+  | ")"                         { RPAREN }
   | eof                         { EOF }
 
 and comment opened depth = parse
