@@ -1,4 +1,5 @@
 (* Example 3, Page 20, Section 2.1 *)
+
 d := 0 
 s := 6 
 t := 0
