@@ -6,9 +6,9 @@ type 'a located = {
 let located loc v = { at = Span.of_loc loc; v }
 
 type body =
- | SAdd of string located * string located
- | SSub of string located * string located * string located
- | SHalt
+ | LAdd of string located * string located
+ | LSub of string located * string located * string located
+ | LHalt
 
 type instr = {
   label : string located ;
