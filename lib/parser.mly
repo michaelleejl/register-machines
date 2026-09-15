@@ -13,12 +13,12 @@ open Located
 %token COMMA
 %token EOF
 
-%start <Linear.config> main
+%start <Source.program> main
 
 %%
 
 main:
-  | ds = declrs ; is = instrs ; EOF { Linear.{ registers = List.rev ds; instrs = is } }
+  | ds = declrs ; is = instrs ; EOF { Source.{ registers = List.rev ds; instrs = is } }
 
 declrs:
   | d = declr { [ d ] }
@@ -33,10 +33,10 @@ instrs:
 
 instr:
   | l=IDENT ; COLON ; r=IDENT ; PLUS; ARROW; t=IDENT
-      { Linear.{ label = located $loc(l) l;
-                 body = LAdd (located $loc(r) r, located $loc(t) t) } }
+      { Source.{ label = located $loc(l) l;
+                 body = SAdd (located $loc(r) r, located $loc(t) t) } }
   | l=IDENT ; COLON ; r=IDENT ; MINUS; ARROW; t=IDENT ; COMMA; f=IDENT
-      { Linear.{ label = located $loc(l) l;
-                 body = LSub (located $loc(r) r, located $loc(t) t, located $loc(f) f) } }
+      { Source.{ label = located $loc(l) l;
+                 body = SSub (located $loc(r) r, located $loc(t) t, located $loc(f) f) } }
   | l=IDENT ; COLON ; HALT
-      { Linear.{ label = located $loc(l) l; body = LHalt } }
+      { Source.{ label = located $loc(l) l; body = SHalt } }
