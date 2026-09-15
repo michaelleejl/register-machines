@@ -2,6 +2,32 @@ open Definitional
 open Target
 open Error
 
+let linearise ({ registers; instrs } : Source.program) : Control.config =
+  match registers, instrs with
+  | [], { label; _ } :: _ -> raise (Fault (No_registers { at = label.at }))
+  | _ ->
+    let translate ({ label; body } : Source.instr) : Control.instr =
+      { label;
+        body = match body with
+          | SAdd (r, t) -> CAdd (r, t)
+          | SSub (r, t, f) -> CSub (r, t, f)
+          | SHalt -> CHalt }
+    in
+    { registers; instrs = List.map translate instrs }
+
+let desugar ({ registers; instrs } : Control.config) : Definitional.config =
+  let dummy = Span.of_loc (Lexing.dummy_pos, Lexing.dummy_pos) in
+  let zero = Located.{ at = dummy; v = "_zero" } in
+  let translate ({ label; body } : Control.instr) : Definitional.instr =
+    { label;
+      body = match body with
+        | CAdd (r, t) -> DAdd (r, t)
+        | CSub (r, t, f) -> DSub (r, t, f)
+        | CHalt -> DHalt
+        | CJump k -> DSub (zero, k, k) }
+  in
+  { registers = registers @ [ { name = zero; value = 0 } ];
+    instrs = List.map translate instrs }
 
 let extract_registers declarations overrides =
   let l = Iarray.length overrides in
@@ -33,7 +59,7 @@ let translate registers labels instr =
     TSub (r, t, f)
   | DHalt -> THalt
 
-let elaborate ({registers; instrs} : Definitional.config) override =
+let resolve ({registers; instrs} : Definitional.config) override =
   let register_maps, register_values = extract_registers registers override in
   let label_maps = extract_labels instrs in
   let register_names = Iarray.init (Var.count register_maps) (Var.decode register_maps) in

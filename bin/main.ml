@@ -17,6 +17,15 @@ let override =
   let doc = "Initial value of the $(i,n)th declared register, overriding the value in $(b,FILE)." in 
   Arg.(value & pos_right 0 int [] & info [] ~docv:"VALUE" ~doc)
 
+let output bound verbose override program = 
+  if verbose then
+    let (machine, traced) = Interpret.run Trace program bound override in
+      Table.all machine traced |>
+      Table.to_string |>
+      print_string
+    else
+      Printf.printf "%d\n" (Interpret.run Value program bound override)
+
 let run bound verbose file override =
   let override = Iarray.of_list override in
   let source = In_channel.with_open_text file In_channel.input_all in
@@ -25,14 +34,10 @@ let run bound verbose file override =
     exit 1
   in
   try
-    let prog = Linearise.program (Parse.program file source) in
-      if verbose then
-        let (machine, traced) = Interpret.run Trace prog bound override in
-          Table.all machine traced |>
-          Table.to_string |>
-          print_string
-      else
-        Printf.printf "%d\n" (Interpret.run Value prog bound override)
+      Parse.program file source 
+        |> Elaborate.linearise 
+        |> Elaborate.desugar 
+        |> output bound verbose override
   with
   | Error.Fault error -> fail error 
   
