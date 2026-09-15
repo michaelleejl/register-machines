@@ -5,6 +5,7 @@ open Error
 let span lexbuf = Span.of_loc (lexbuf.Lexing.lex_start_p, lexbuf.Lexing.lex_curr_p)
 }
 
+let lower = ['a'-'z']
 let alpha = ['a'-'z' 'A'-'Z']
 let digit = ['0'-'9']
 
@@ -16,8 +17,8 @@ rule token = parse
   | ":="                        { COLONEQUAL }
   | "+"                         { PLUS }
   | "-"                         { MINUS }
-  | "HALT"|"halt"               { HALT }
-  | (alpha (alpha|digit)*) as s { IDENT s }
+  | "halt"                      { HALT }
+  | (lower (alpha|digit)*) as s { IDENT s }
   | ['0'-'9']+ as i             { INTEGER (int_of_string i)}
   | ":"                         { COLON }
   | ","                         { COMMA }
