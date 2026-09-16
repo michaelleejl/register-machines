@@ -22,6 +22,7 @@ rule token = parse
   | "machine"                   { MACHINE }
   | "struct"                    { STRUCT }
   | "end"                       { END }
+  | "reg"                       { REG }
   | (lower (alpha|digit)*) as s { IDENT s }
   | (upper (alpha|digit)*) as s { NAME s }
   | ['0'-'9']+ as i             { INTEGER (int_of_string i)}

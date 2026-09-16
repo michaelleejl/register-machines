@@ -10,6 +10,7 @@ type error =
   | No_registers of { at : Span.t }
   | Wrong_arity of { at : Span.t; machine : string; expected : int; given : int }
   | Repeated_argument of { at : Span.t; first : Span.t; name : string }
+  | Initialised_in_machine of { at : Span.t; name : string }
 
 exception Fault of error
 
@@ -18,7 +19,7 @@ let at = function
   | Missing_index { at; _ } | Duplicate { at; _ }
   | Undeclared { at; _ } | Unterminated_comment {at; _}
   | No_registers { at } | Wrong_arity { at; _ }
-  | Repeated_argument { at; _ } -> at
+  | Repeated_argument { at; _ } | Initialised_in_machine { at; _ } -> at
 let where (p : Lexing.position) =
   Printf.sprintf "%s:%d:%d" p.pos_fname p.pos_lnum (p.pos_cnum - p.pos_bol + 1)
 
@@ -40,6 +41,8 @@ let message = function
   | Wrong_arity { machine; expected; given; _ } ->
     Printf.sprintf "%s takes %d registers, not %d" machine expected given
   | Repeated_argument { name; _ } -> Printf.sprintf "%s is passed twice" name
+  | Initialised_in_machine { name; _ } ->
+    Printf.sprintf "%s is declared inside a machine, so it has no initial value" name
 
 let label = function
   | Unexpected_character _ -> "remove it"
@@ -58,6 +61,7 @@ let label = function
   | No_registers _ -> "declare a register above this instruction"
   | Wrong_arity { given; _ } -> Printf.sprintf "%d given here" given
   | Repeated_argument _ -> "passed again here"
+  | Initialised_in_machine _ -> "remove the value"
 
 let note = function
   | Duplicate { kind = Register; first; _ } -> Some ("first declared here", first)

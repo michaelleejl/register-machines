@@ -65,23 +65,24 @@ let acc c xs i = List.fold_left c i xs
 
 let rec check ({ registers; instructions; _ } as p) =
   check_top_level_registers p;
-  check_program Scope.empty p; p
-and check_top_level_registers ({ registers; instructions; _ }) = 
+  check_program (fun (r : Definitional.register) -> r.name) Scope.empty p; p
+and check_top_level_registers ({ registers; instructions; _ }) =
   match registers, instructions with
    | [], { label; _ } :: _ -> raise (Error.Fault (Error.No_registers { at = label.at }))
    | _ -> ()
-and check_program scope {machines;registers;instructions} =
+and check_program : 'r. ('r -> string located) -> Scope.scope -> 'r block -> unit =
+  fun name scope {machines;registers;instructions} ->
  let scope = acc check_machine machines scope
-          |> acc check_register registers 
-          |> acc add_label instructions in 
+          |> acc (check_register name) registers
+          |> acc add_label instructions in
   List.iter (check_instruction scope) instructions
 
-and check_machine scope {name;parameters;program} = 
-  let scope' = List.fold_left (Scope.add Register) (Scope.enter scope) parameters in 
-  check_program scope' program ; 
+and check_machine scope {name;parameters;body} =
+  let scope' = List.fold_left (Scope.add Register) (Scope.enter scope) parameters in
+  check_program Fun.id scope' body ;
   Scope.add Machine scope ({v=(name.v, List.length parameters); at=name.at})
-and check_register scope register = 
-  Scope.add Register scope (register.name)
+and check_register : 'r. ('r -> string located) -> Scope.scope -> 'r -> Scope.scope =
+  fun name scope register -> Scope.add Register scope (name register)
 and add_label scope {label; body} = 
   Scope.add Label scope label
 and check_instruction scope {label; body} = 

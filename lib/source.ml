@@ -10,13 +10,15 @@ type instruction = {
   body : body ;
 }
 
-type program = {
+type 'r block = {
   machines: machine list;
-  registers: Definitional.register list;
+  registers: 'r list;
   instructions: instruction list
 }
 and machine = {
   name : string located;
-  parameters: string located list; 
-  program : program;
+  parameters: string located list;
+  body : string located block;
 }
+
+type program = Definitional.register block

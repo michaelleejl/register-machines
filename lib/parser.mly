@@ -2,7 +2,7 @@
 open Located
 %}
 
-%token <int> INTEGER 
+%token <int> INTEGER
 %token <string> IDENT
 %token <string> NAME
 %token ARROW
@@ -18,6 +18,7 @@ open Located
 %token EQUAL
 %token LPAREN
 %token RPAREN
+%token REG
 %token EOF
 
 %start <Source.program> main
@@ -25,24 +26,39 @@ open Located
 %%
 
 main:
-  | p = program; EOF { p }
-
-program:
-  | ms = list(machine) ; rs = registers ; is = instructions
-    { Source.{ machines = ms; registers = List.rev rs; instructions = is } }
-
-registers:
-  | { [] }
-  | rs = registers ; r = register { r :: rs }
+  | ms = list(machine) ; ds = declarations ; is = instructions ; EOF
+    { let registers =
+        List.map
+          (fun (name, value) ->
+             Definitional.{ name; value = match value with None -> 0 | Some v -> v.v })
+          ds
+      in
+      Source.{ machines = ms; registers; instructions = is } }
 
 machine:
   | MACHINE ; n = NAME ; LPAREN ; ps = separated_list(COMMA, located(IDENT)) ; RPAREN ;
-    EQUAL ; STRUCT ; p = program ; END
-    { Source.{ name = located $loc(n) n; parameters = ps; program = p } }
+    EQUAL ; STRUCT ; ms = list(machine) ; ds = declarations ; is = instructions ; END
+    { let registers =
+        List.map
+          (fun (name, value) ->
+             match value with
+             | None -> name
+             | Some v ->
+               raise (Error.Fault (Error.Initialised_in_machine { at = v.at; name = name.v })))
+          ds
+      in
+      Source.{ name = located $loc(n) n;
+               parameters = ps;
+               body = { machines = ms; registers; instructions = is } } }
 
-register:
-  | r = IDENT ; COLONEQUAL ; v = INTEGER
-    { Definitional.{ name = located $loc(r) r; value = v } }
+declarations:
+  | { [] }
+  | ds = declarations ; REG ; xs = separated_nonempty_list(COMMA, declaration) { ds @ xs }
+
+declaration:
+  | r = located(IDENT) { (r, None) }
+  | r = located(IDENT) ; c = COLONEQUAL ; v = INTEGER
+    { (r, Some (located ($startpos(c), $endpos(v)) v)) }
 
 instructions:
   | nonempty_list(instruction) {$1}
