@@ -1,15 +1,5 @@
 %{
 open Located
-type item =
-  | Definition of Source.defn
-  | Register of Definitional.register
-
-let split items = 
-  List.fold_left
-    (fun (ds, rs) -> function
-        | Definition d -> (d :: ds, rs)
-        | Register r -> (ds, r :: rs))
-    ([], []) items
 %}
 
 %token <int> INTEGER 
@@ -38,20 +28,14 @@ main:
   | p = program; EOF { p }
 
 program:
-  | items = items; instrs = instrs {
-    let definitions, registers = split items in 
-    Source.{ definitions; registers; instrs }
-  }
+  | ms = list(machine) ; rs = registers ; is = instructions
+    { Source.{ machines = ms; registers = List.rev rs; instructions = is } }
 
-items:
+registers:
   | { [] }
-  | is = items ; i = item { i :: is }
+  | rs = registers ; r = register { r :: rs }
 
-item:
-  | d = defn { Definition d }
-  | r = register { Register r }
-
-defn:
+machine:
   | MACHINE ; n = NAME ; LPAREN ; ps = separated_list(COMMA, located(IDENT)) ; RPAREN ;
     EQUAL ; STRUCT ; p = program ; END
     { Source.{ name = located $loc(n) n; parameters = ps; program = p } }
@@ -60,10 +44,10 @@ register:
   | r = IDENT ; COLONEQUAL ; v = INTEGER
     { Definitional.{ name = located $loc(r) r; value = v } }
 
-instrs:
-  | nonempty_list(instr) {$1}
+instructions:
+  | nonempty_list(instruction) {$1}
 
-instr:
+instruction:
   | l=IDENT ; COLON ; r=IDENT ; PLUS; ARROW; t=IDENT
       { Source.{ label = located $loc(l) l;
                  body = SAdd (located $loc(r) r, located $loc(t) t) } }

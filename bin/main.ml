@@ -35,6 +35,7 @@ let run bound verbose file override =
   in
   try
       Parse.program file source 
+        |> Check.check 
         |> Elaborate.linearise 
         |> Elaborate.desugar 
         |> output bound verbose override

@@ -6,12 +6,12 @@ type body =
  | CHalt
  | CJump of string located
 
-type instr = {
+type instruction = {
   label : string located ;
   body : body ;
 }
 
 type config = {
   registers: Definitional.register list;
-  instrs: instr list
+  instructions: instruction list
 }

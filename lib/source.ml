@@ -5,17 +5,17 @@ type body =
  | SSub of string located * string located * string located
  | SHalt
 
-type instr = {
+type instruction = {
   label : string located ;
   body : body ;
 }
 
 type program = {
-  definitions: defn list;
+  machines: machine list;
   registers: Definitional.register list;
-  instrs: instr list
+  instructions: instruction list
 }
-and defn = {
+and machine = {
   name : string located;
   parameters: string located list; 
   program : program;

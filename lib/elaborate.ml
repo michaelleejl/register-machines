@@ -1,24 +1,20 @@
 open Definitional
 open Target
-open Error
 
-let linearise ({ registers; instrs } : Source.program) : Control.config =
-  match registers, instrs with
-  | [], { label; _ } :: _ -> raise (Fault (No_registers { at = label.at }))
-  | _ ->
-    let translate ({ label; body } : Source.instr) : Control.instr =
-      { label;
-        body = match body with
-          | SAdd (r, t) -> CAdd (r, t)
-          | SSub (r, t, f) -> CSub (r, t, f)
-          | SHalt -> CHalt }
-    in
-    { registers; instrs = List.map translate instrs }
+let linearise ({ registers; instructions } : Source.program) : Control.config =
+  let translate ({ label; body } : Source.instruction) : Control.instruction =
+    { label;
+      body = match body with
+        | SAdd (r, t) -> CAdd (r, t)
+        | SSub (r, t, f) -> CSub (r, t, f)
+        | SHalt -> CHalt }
+  in
+  { registers; instructions = List.map translate instructions }
 
-let desugar ({ registers; instrs } : Control.config) : Definitional.config =
+let desugar ({ registers; instructions } : Control.config) : Definitional.config =
   let dummy = Span.of_loc (Lexing.dummy_pos, Lexing.dummy_pos) in
   let zero = Located.{ at = dummy; v = "_zero" } in
-  let translate ({ label; body } : Control.instr) : Definitional.instr =
+  let translate ({ label; body } : Control.instruction) : Definitional.instruction =
     { label;
       body = match body with
         | CAdd (r, t) -> DAdd (r, t)
@@ -26,10 +22,23 @@ let desugar ({ registers; instrs } : Control.config) : Definitional.config =
         | CHalt -> DHalt
         | CJump k -> DSub (zero, k, k) }
   in
-  { registers = registers @ [ { name = zero; value = 0 } ];
-    instrs = List.map translate instrs }
+  let has_jump =
+    List.exists
+      (fun ({ body; _ } : Control.instruction) ->
+         match body with CJump _ -> true | _ -> false)
+      instructions
+  in
+  { registers = if has_jump then registers @ [ { name = zero; value = 0 } ] else registers;
+    instructions = List.map translate instructions }
 
-let extract_registers declarations overrides =
+let rec resolve ({registers; instructions} : Definitional.config) override =
+  let register_maps, register_values = extract_registers registers override in
+  let label_maps = extract_labels instructions in
+  let register_names = Iarray.init (Var.count register_maps) (Var.decode register_maps) in
+  let label_names = Iarray.init (Var.count label_maps) (Var.decode label_maps) in
+  let t_instructions = List.map (translate register_maps label_maps) instructions in
+  { register_values; register_names; label_names; instructions = Iarray.of_list t_instructions }
+and extract_registers declarations overrides =
   let l = Iarray.length overrides in
   let extract (i, maps, values) {name; value} =
     let v =
@@ -37,17 +46,17 @@ let extract_registers declarations overrides =
       if l <= (i-1) then value else Iarray.get overrides (i-1) in
     (i+1, Var.add maps name, v::values)
   in
-  let _, maps, values = List.fold_left extract (0, Var.initial Register, []) declarations in
+  let _, maps, values = List.fold_left extract (0, Var.initial, []) declarations in
   (maps, Iarray.of_list (List.rev values))
 
-let extract_labels instrs =
+and extract_labels instructions =
   let extract maps {label; _} = Var.add maps label in
-  List.fold_left extract (Var.initial Label) instrs
+  List.fold_left extract Var.initial instructions
 
-let translate registers labels instr =
+and translate registers labels instruction =
   let register r = Var.encode registers r in
   let label l = Var.encode labels l in
-  match instr.body with
+  match instruction.body with
   | DAdd (r, t) ->
     let r = register r in
     let t = label t in
@@ -58,11 +67,3 @@ let translate registers labels instr =
     let f = label f in
     TSub (r, t, f)
   | DHalt -> THalt
-
-let resolve ({registers; instrs} : Definitional.config) override =
-  let register_maps, register_values = extract_registers registers override in
-  let label_maps = extract_labels instrs in
-  let register_names = Iarray.init (Var.count register_maps) (Var.decode register_maps) in
-  let label_names = Iarray.init (Var.count label_maps) (Var.decode label_maps) in
-  let t_instrs = List.map (translate register_maps label_maps) instrs in
-  { register_values; register_names; label_names; instrs = Iarray.of_list t_instrs }

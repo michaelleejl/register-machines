@@ -5,7 +5,7 @@ type body =
  | DSub of string located * string located * string located
  | DHalt
 
-type instr = {
+type instruction = {
   label : string located ;
   body : body ;
 }
@@ -17,5 +17,5 @@ type register = {
 
 type config = {
   registers: register list;
-  instrs: instr list
+  instructions: instruction list
 }
