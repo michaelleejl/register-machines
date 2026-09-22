@@ -2,7 +2,6 @@
 open Parser
 open Syntax
 let span lexbuf = Text.Span.of_loc (lexbuf.Lexing.lex_start_p, lexbuf.Lexing.lex_curr_p)
-
 }
 
 let lower = ['a'-'z']
@@ -18,6 +17,12 @@ rule token = parse
   | ":="                        { COLONEQUAL }
   | "+"                         { PLUS }
   | "-"                         { MINUS }
+  | ";"                         { SEMICOLON }
+  | "if"                        { IF }
+  | "then"                      { THEN }
+  | "else"                      { ELSE }
+  | "while"                     { WHILE }
+  | "do"                        { DO }
   | "halt"                      { HALT }
   | "machine"                   { MACHINE }
   | "execute"                   { EXECUTE }

@@ -1,5 +1,6 @@
-open Lang.Definitional
-open Lang.Target
+open Lang
+open Definitional
+open Target
 open Seq
 open Mode
 

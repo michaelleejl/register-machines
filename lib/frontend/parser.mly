@@ -22,7 +22,15 @@ open Text.Located
 %token LPAREN
 %token RPAREN
 %token REG
+%token SEMICOLON
+%token IF
+%token THEN
+%token ELSE
+%token WHILE
+%token DO
 %token EOF
+
+%right SEMICOLON
 
 %start <Lang.Source.program> main
 
@@ -40,7 +48,12 @@ main:
 
 machine:
   | MACHINE ; n = NAME ; LPAREN ; ps = separated_list(COMMA, located(IDENT)) ; RPAREN ;
-    EQUAL ; STRUCT ; ms = list(machine) ; ds = declarations ; is = instructions ; END
+    EQUAL ; d = machine_expr
+    { Lang.Source.{ name = located $loc(n) n; parameters = ps; definition = d } }
+
+machine_expr:
+  | e = machine_expr ; SEMICOLON ; f = machine_expr { Lang.Source.SSeq (e, f) }
+  | STRUCT ; ms = list(machine) ; ds = declarations ; is = instructions ; END
     { let registers =
         List.map
           (fun (name, value) ->
@@ -50,9 +63,13 @@ machine:
                raise (Syntax.Error (Syntax.Initialised_in_machine { at = v.at; name = name.v })))
           ds
       in
-      Lang.Source.{ name = located $loc(n) n;
-               parameters = ps;
-               definition = { machines = ms; registers; instructions = is } } }
+      Lang.Source.SStruct { machines = ms; registers; instructions = is } }
+  | n = NAME ; LPAREN ; args = separated_list(COMMA, located(IDENT)) ; RPAREN
+    { Lang.Source.SApply { name = located $loc(n) n; arguments = args } }
+  | IF ; r = located(IDENT) ; THEN ; t = machine_expr ; ELSE ; f = machine_expr ; END
+    { Lang.Source.SIf (r, t, f) }
+  | WHILE ; r = located(IDENT) ; DO ; e = machine_expr ; END
+    { Lang.Source.SWhile (r, e) }
 
 declarations:
   | { [] }

@@ -1,5 +1,7 @@
 open Text.Located
-open Lang.Source
+open Lang
+open Checked
+open Source
 module StringMap = Map.Make (String)
 
 type _ kind =
@@ -186,26 +188,40 @@ module Scope = struct
   let label scope name = ignore (find Label scope.labels name)
 end
 
+let erase_string (r : string located) = r.v
+
 let erase_body = function
-  | SAdd (r, l) -> Lang.Checked.ChAdd (r.v, l.v)
-  | SSub (r, l, l') -> Lang.Checked.ChSub (r.v, l.v, l'.v)
-  | SHalt -> Lang.Checked.ChHalt
+  | SAdd (r, l) -> ChAdd (r.v, l.v)
+  | SSub (r, l, l') -> ChSub (r.v, l.v, l'.v)
+  | SHalt -> ChHalt
   | SExecute { machine; arguments; next } ->
-      Lang.Checked.ChExecute
+      ChExecute
         {
           machine = machine.v;
-          arguments = List.map (fun (a : string located) -> a.v) arguments;
+          arguments = List.map erase_string arguments;
           next = next.v;
         }
-  | SClear (r, k) -> Lang.Checked.ChClear (r.v, k.v)
-  | SJump k -> Lang.Checked.ChJump k.v
+  | SClear (r, k) -> ChClear (r.v, k.v)
+  | SJump k -> ChJump k.v
 
-let erase_instruction ({ label; body } : Lang.Source.instruction) :
-    Lang.Checked.instruction =
+let erase_instruction ({ label; body } : Source.instruction) :
+    Checked.instruction =
   { label = label.v; body = erase_body body }
 
-let rec erase_block :
-    'r 's. ('r -> 's) -> 'r Lang.Source.block -> 's Lang.Checked.block =
+let rec erase_definition = function
+  | SStruct b -> ChStruct (erase_block erase_string b)
+  | SApply { name; arguments } ->
+      ChApply
+        {
+          name = erase_string name;
+          arguments = List.map erase_string arguments;
+        }
+  | SSeq (d1, d2) -> ChSeq (erase_definition d1, erase_definition d2)
+  | SIf (r, d1, d2) ->
+      ChIf (erase_string r, erase_definition d1, erase_definition d2)
+  | SWhile (r, d) -> ChWhile (erase_string r, erase_definition d)
+
+and erase_block : 'r 's. ('r -> 's) -> 'r Source.block -> 's Checked.block =
  fun register { machines; registers; instructions } ->
   {
     machines = List.map erase_machine machines;
@@ -213,17 +229,17 @@ let rec erase_block :
     instructions = List.map erase_instruction instructions;
   }
 
-and erase_machine ({ name; parameters; definition } : Lang.Source.machine) :
-    Lang.Checked.machine =
+and erase_machine ({ name; parameters; definition } : Source.machine) :
+    Checked.machine =
   {
     name = name.v;
-    parameters = List.map (fun (p : string located) -> p.v) parameters;
-    definition = erase_block (fun (r : string located) -> r.v) definition;
+    parameters = List.map erase_string parameters;
+    definition = erase_definition definition;
   }
 
-let erase (p : Lang.Source.program) : Lang.Checked.program =
+let erase (p : Source.program) : Checked.program =
   erase_block
-    (fun ({ name; value } : Lang.Source.register) : Lang.Checked.register ->
+    (fun ({ name; value } : Source.register) : Checked.register ->
       { name = name.v; value })
     p
 
@@ -231,7 +247,7 @@ let acc c xs i = List.fold_left c i xs
 
 let rec check ({ registers; instructions; _ } as p) =
   check_top_level_registers p;
-  check_program (fun (r : Lang.Source.register) -> r.name) Scope.empty p;
+  check_program (fun (r : Source.register) -> r.name) Scope.empty p;
   erase p
 
 and check_top_level_registers { registers; instructions; _ } =
@@ -253,8 +269,22 @@ and check_machine scope { name; parameters; definition } =
   let scope' =
     List.fold_left (Scope.add Register) (Scope.enter scope) parameters
   in
-  check_program Fun.id scope' definition;
+  check_definition scope' definition;
   Scope.add Machine scope { v = (name.v, List.length parameters); at = name.at }
+
+and check_definition scope = function
+  | SStruct b -> check_program Fun.id scope b
+  | SApply { name; arguments } -> check_call scope name arguments
+  | SSeq (d1, d2) ->
+      check_definition scope d1;
+      check_definition scope d2
+  | SIf (r, d1, d2) ->
+      Scope.register scope r;
+      check_definition scope d1;
+      check_definition scope d2
+  | SWhile (r, d) ->
+      Scope.register scope r;
+      check_definition scope d
 
 and check_register :
     'r. ('r -> string located) -> Scope.scope -> 'r -> Scope.scope =
@@ -278,9 +308,12 @@ and check_body scope body =
       Scope.label scope k
   | SJump k -> Scope.label scope k
   | SExecute { machine; arguments; next } ->
-      check_arity scope machine arguments;
-      ignore (check_arguments scope StringMap.empty arguments);
+      check_call scope machine arguments;
       Scope.label scope next
+
+and check_call scope machine arguments =
+  check_arity scope machine arguments;
+  ignore (check_arguments scope StringMap.empty arguments)
 
 and check_arity scope machine arguments =
   let Scope.{ arity } = Scope.machine scope machine in

@@ -24,9 +24,10 @@ let output bound verbose program =
 let run bound verbose file =
   let source = In_channel.with_open_text file In_channel.input_all in
   try
-    Parse.program file source |> Check.check |> Elaborate.Initialise.program
-    |> Elaborate.Lift.program |> Elaborate.Flatten.program
-    |> Elaborate.Desugar.program |> output bound verbose
+    Parse.program file source |> Check.check |> Elaborate.Expand.program
+    |> Elaborate.Initialise.program |> Elaborate.Lift.program
+    |> Elaborate.Flatten.program |> Elaborate.Desugar.program
+    |> output bound verbose
   with e -> (
     match Frontend.Report.try_run e with
     | Some report ->

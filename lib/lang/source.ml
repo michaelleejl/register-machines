@@ -24,7 +24,14 @@ type 'r block = {
 and machine = {
   name : string located;
   parameters : string located list;
-  definition : string located block;
+  definition : definition;
 }
+
+and definition =
+  | SStruct of string located block
+  | SApply of { name : string located; arguments : string located list }
+  | SSeq of definition * definition
+  | SIf of string located * definition * definition
+  | SWhile of string located * definition
 
 type program = register block

@@ -1,4 +1,4 @@
-open Lang.Checked
+open Lang.Expanded
 
 let rec machine m =
   let rec clear registers =
@@ -11,7 +11,7 @@ let rec machine m =
           | first :: _ -> first.label
           | [] -> failwith "initialise: a machine has no instructions"
         in
-        { label = "_init_" ^ r; body = ChClear (r, next) } :: rest
+        { label = "_init_" ^ r; body = EClear (r, next) } :: rest
   in
   {
     m with

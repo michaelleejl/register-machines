@@ -1,3 +1,3 @@
 open Lang
 
-val program : Checked.program -> Checked.program
+val program : Expanded.program -> Expanded.program

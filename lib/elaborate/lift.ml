@@ -1,6 +1,6 @@
 open Lang
 open Lifted
-open Checked
+open Expanded
 module StringMap = Map.Make (String)
 
 let qualify prefix name = if prefix = "" then name else prefix ^ "." ^ name
@@ -13,12 +13,12 @@ let rename renamings registers (instruction : instruction) =
   in
   let body =
     match instruction.body with
-    | ChAdd (r, l) -> LAdd (rename_register r, l)
-    | ChSub (r, l, l') -> LSub (rename_register r, l, l')
-    | ChHalt -> LHalt
-    | ChClear (r, k) -> LClear (rename_register r, k)
-    | ChJump k -> LJump k
-    | ChExecute { machine; arguments; next } ->
+    | EAdd (r, l) -> LAdd (rename_register r, l)
+    | ESub (r, l, l') -> LSub (rename_register r, l, l')
+    | EHalt -> LHalt
+    | EClear (r, k) -> LClear (rename_register r, k)
+    | EJump k -> LJump k
+    | EExecute { machine; arguments; next } ->
         let machine =
           match StringMap.find_opt machine renamings with
           | Some path -> path

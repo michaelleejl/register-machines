@@ -1,3 +1,3 @@
 open Lang
 
-val program : Checked.program -> Lifted.program
+val program : Expanded.program -> Lifted.program

@@ -17,8 +17,15 @@ type 'r block = {
 and machine = {
   name : string;
   parameters : string list;
-  definition : string block;
+  definition : definition;
 }
+
+and definition =
+  | ChStruct of string block
+  | ChApply of { name : string; arguments : string list }
+  | ChSeq of definition * definition
+  | ChIf of string * definition * definition
+  | ChWhile of string * definition
 
 type register = { name : string; value : int }
 type program = register block
