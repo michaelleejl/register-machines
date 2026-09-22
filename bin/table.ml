@@ -8,7 +8,11 @@ let row (machine : Lang.Target.program) (s : Backend.Config.t) =
 
 let all (machine : Lang.Target.program) states =
   let rows = List.of_seq (Seq.map (row machine) states) in
-  let headings = match rows with [] -> [] | _ -> "Label" :: Iarray.to_list machine.register_names in
+  let headings =
+    match rows with
+    | [] -> []
+    | _ -> "Label" :: Iarray.to_list machine.register_names
+  in
   { headings; rows }
 
 let last machine states =
@@ -20,10 +24,10 @@ let column_widths { headings; rows } =
   match if headings = [] then rows else headings :: rows with
   | [] -> []
   | first :: rest ->
-    List.fold_left
-      (List.map2 (fun w cell -> max w (String.length cell)))
-      (List.map String.length first)
-      rest
+      List.fold_left
+        (List.map2 (fun w cell -> max w (String.length cell)))
+        (List.map String.length first)
+        rest
 
 let line widths cells =
   let pad w cell = String.make (w - String.length cell) ' ' ^ cell in
@@ -36,10 +40,11 @@ let to_string table =
     match table.headings with
     | [] -> body
     | headings ->
-      let heading = line widths headings in
-      let rule =
-        String.concat "" (List.init (String.length heading) (fun _ -> "\u{2500}"))
-      in
-      (rule :: heading :: rule :: body) @ [ rule ]
+        let heading = line widths headings in
+        let rule =
+          String.concat ""
+            (List.init (String.length heading) (fun _ -> "\u{2500}"))
+        in
+        (rule :: heading :: rule :: body) @ [ rule ]
   in
   String.concat "" (List.map (fun l -> l ^ "\n") lines)
