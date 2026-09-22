@@ -3,7 +3,7 @@ type instruction =
  | TSub of int * int * int
  | THalt 
 
-type config = {
+type program = {
   register_values: int iarray;
   register_names: string iarray;
   label_names: string iarray;

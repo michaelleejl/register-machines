@@ -1,6 +1,5 @@
-open Elaborate
-open Definitional
-open Target 
+open Lang.Definitional
+open Lang.Target 
 open Seq
 open Mode 
 
@@ -18,20 +17,20 @@ let step instructions registers j =
 
 let eval initial instructions =
   let rec go registers j () =
-    Cons (State.{ label = j; registers },
+    Cons (Config.{ label = j; registers },
           match step instructions registers j with
           | None -> (fun () -> Nil)
           | Some (registers', j') -> go registers' j')
   in
   go initial 0
 
-let run: type a. a mode -> Definitional.config -> int option -> int iarray -> a =
-fun mode prog bound override ->
-    let ({ register_values; instructions; _ } as machine) = resolve prog override in
+let run: type a. a mode -> Lang.Definitional.program -> int option -> a =
+fun mode prog bound ->
+    let ({ register_values; instructions; _ } as machine) = Elaborate.Resolve.program prog in
       let states = eval register_values instructions in
         let states = match bound with None -> states | Some b -> Seq.take (b + 1) states in
         match mode with
         | Trace -> (machine, states)
         | Value ->
-            Seq.fold_left (fun _ (s : State.t) -> Iarray.get s.registers 0)
+            Seq.fold_left (fun _ (s : Config.t) -> Iarray.get s.registers 0)
                   (Iarray.get register_values 0) states

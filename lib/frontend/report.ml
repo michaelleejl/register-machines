@@ -1,3 +1,24 @@
+type message = {
+  at : Text.Span.t;
+  text : string;
+}
+
+type t = {
+  summary : string;
+  label : message;
+  notes : message list;
+}
+
+let handlers : (exn -> t option) list ref = ref []
+
+let register handler = handlers := handler :: !handlers
+
+let try_run e = 
+  List.find_map (fun handler -> handler e) !handlers
+
+let where (p : Lexing.position) =
+  Printf.sprintf "%s:%d:%d" p.pos_fname p.pos_lnum (p.pos_cnum - p.pos_bol + 1)
+
 let line_at source (p : Lexing.position) =
   let stop =
     Option.value (String.index_from_opt source p.pos_bol '\n')
@@ -5,7 +26,7 @@ let line_at source (p : Lexing.position) =
   in
   String.sub source p.pos_bol (stop - p.pos_bol)
 
-let block ~source ~severity ~summary ~label (span : Span.t) =
+let block ~source ~severity ~summary ~label (span : Text.Span.t) =
   let text = line_at source span.start in
   let number = string_of_int span.start.pos_lnum in
   let gutter = String.make (String.length number) ' ' in
@@ -16,18 +37,14 @@ let block ~source ~severity ~summary ~label (span : Span.t) =
   let caret = String.make column ' ' ^ String.make width '^' in
   String.concat "\n"
     [ Printf.sprintf "%s: %s" severity summary;
-      Printf.sprintf "%s--> %s" gutter (Error.where span.start);
+      Printf.sprintf "%s--> %s" gutter (where span.start);
       Printf.sprintf "%s |" gutter;
       Printf.sprintf "%s | %s" number text;
       Printf.sprintf "%s | %s" gutter (if label = "" then caret else caret ^ " " ^ label) ]
 
-(** One fault as a summary, the line it is on, and a caret under the words. *)
-let render ~source error =
-  let primary =
-    block ~source ~severity:"error" ~summary:(Error.message error)
-      ~label:(Error.label error) (Error.at error)
-  in
-  match Error.note error with
-  | None -> primary ^ "\n"
-  | Some (summary, span) ->
-    primary ^ "\n\n" ^ block ~source ~severity:"note" ~summary ~label:"" span ^ "\n"
+let render ~source { summary; label; notes } =
+  let note { at; text } = block ~source ~severity:"note" ~summary:text ~label:"" at in
+  String.concat "\n\n"
+    (block ~source ~severity:"error" ~summary ~label:label.text label.at
+     :: List.map note notes)
+  ^ "\n"

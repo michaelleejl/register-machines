@@ -1,10 +1,12 @@
+open Register_machines
+
 type t = { headings : string list; rows : string list list }
 
-let row (machine : Target.config) (s : State.t) =
+let row (machine : Lang.Target.program) (s : Backend.Config.t) =
   Iarray.get machine.label_names s.label
   :: List.map string_of_int (Iarray.to_list s.registers)
 
-let all (machine : Target.config) states =
+let all (machine : Lang.Target.program) states =
   let rows = List.of_seq (Seq.map (row machine) states) in
   let headings = match rows with [] -> [] | _ -> "Label" :: Iarray.to_list machine.register_names in
   { headings; rows }
