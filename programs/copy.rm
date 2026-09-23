@@ -1,0 +1,16 @@
+(* Example 3, Page 20, Section 2.1 *)
+
+machine Copy(d, s) = struct 
+  reg t
+  l0 : d- -> l0, l1 
+  l1 : s- -> l2, l4 
+  l2 : d+ -> l3 
+  l3 : t+ -> l1 
+  l4 : t- -> l5, l6
+  l5 : s+ -> l4 
+  l6 : halt
+end 
+
+reg r0,r1:=6
+l0 : execute Copy(r0, r1) -> l1
+l1 : halt
