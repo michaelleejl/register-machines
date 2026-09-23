@@ -18,6 +18,7 @@ open Text.Located
 %token JUMP
 %token STRUCT
 %token END
+%token DONE
 %token EQUAL
 %token LPAREN
 %token RPAREN
@@ -68,7 +69,7 @@ machine_expr:
     { Lang.Source.SApply { name = located $loc(n) n; arguments = args } }
   | IF ; r = located(IDENT) ; THEN ; t = machine_expr ; ELSE ; f = machine_expr ; END
     { Lang.Source.SIf (r, t, f) }
-  | WHILE ; r = located(IDENT) ; DO ; e = machine_expr ; END
+  | WHILE ; r = located(IDENT) ; DO ; e = machine_expr ; DONE
     { Lang.Source.SWhile (r, e) }
 
 declarations:

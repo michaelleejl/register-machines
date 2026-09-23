@@ -28,6 +28,7 @@ rule token = parse
   | "execute"                   { EXECUTE }
   | "struct"                    { STRUCT }
   | "end"                       { END }
+  | "done"                      { DONE }
   | "reg"                       { REG }
   | "clear"                     { CLEAR }
   | "jump"                      { JUMP }
