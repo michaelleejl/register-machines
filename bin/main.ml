@@ -17,21 +17,22 @@ let file = Arg.(required & pos 0 (some file) None & info [] ~docv:"FILE")
 
 let output bound verbose program =
   if verbose then
-    let machine, traced = Backend.Interpret.run Trace program bound in
+    let machine, traced = Interpret.run Trace program bound in
     Table.all machine traced |> Table.to_string |> print_string
-  else Printf.printf "%d\n" (Backend.Interpret.run Value program bound)
+  else Printf.printf "%d\n" (Interpret.run Value program bound)
 
 let run bound verbose file =
   let source = In_channel.with_open_text file In_channel.input_all in
   try
-    Parse.program file source |> Check.check |> Elaborate.Expand.program
-    |> Elaborate.Initialise.program |> Elaborate.Lift.program
-    |> Elaborate.Flatten.program |> Elaborate.Desugar.program
+    Parse.program file source |> Check.check |> Expand.program
+    |> Initialise.program |> Lift.program
+    |> Flatten.program |> Desugar.program
+    |> Resolve.program
     |> output bound verbose
   with e -> (
-    match Frontend.Report.try_run e with
+    match Report.try_run e with
     | Some report ->
-        prerr_string (Frontend.Report.render ~source report);
+        prerr_string (Report.render ~source report);
         prerr_newline ();
         exit 1
     | None -> raise e)
