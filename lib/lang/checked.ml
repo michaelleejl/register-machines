@@ -2,6 +2,7 @@ type body =
   | ChAdd of string * string
   | ChSub of string * string * string
   | ChHalt
+  | ChExit
   | ChExecute of { machine : string; arguments : string list; next : string }
   | ChClear of string * string
   | ChJump of string

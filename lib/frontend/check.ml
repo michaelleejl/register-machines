@@ -194,6 +194,7 @@ let erase_body = function
   | SAdd (r, l) -> ChAdd (r.v, l.v)
   | SSub (r, l, l') -> ChSub (r.v, l.v, l'.v)
   | SHalt -> ChHalt
+  | SExit -> ChExit 
   | SExecute { machine; arguments; next } ->
       ChExecute
         {
@@ -302,7 +303,7 @@ and check_body scope body =
       Scope.register scope r;
       Scope.label scope l1;
       Scope.label scope l2
-  | SHalt -> ()
+  | SHalt | SExit -> ()
   | SClear (r, k) ->
       Scope.register scope r;
       Scope.label scope k

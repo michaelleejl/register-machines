@@ -4,6 +4,7 @@ type body =
   | SAdd of string located * string located
   | SSub of string located * string located * string located
   | SHalt
+  | SExit 
   | SExecute of {
       machine : string located;
       arguments : string located list;

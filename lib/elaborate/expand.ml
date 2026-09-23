@@ -6,6 +6,7 @@ let translate_body = function
   | ChAdd (r, k) -> EAdd (r, k)
   | ChSub (r, k1, k2) -> ESub (r, k1, k2)
   | ChHalt -> EHalt
+  | ChExit -> EExit 
   | ChExecute { machine; arguments; next } ->
       EExecute { machine; arguments; next }
   | ChClear (r, k) -> EClear (r, k)

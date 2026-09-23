@@ -23,6 +23,7 @@ rule token = parse
   | "else"                      { ELSE }
   | "while"                     { WHILE }
   | "do"                        { DO }
+  | "exit"                      { EXIT }
   | "halt"                      { HALT }
   | "machine"                   { MACHINE }
   | "execute"                   { EXECUTE }

@@ -4,6 +4,7 @@ type body =
   | EAdd of string * string
   | ESub of string * string * string
   | EHalt
+  | EExit
   | EExecute of { machine : string; arguments : string list; next : string }
   | EClear of string * string
   | EJump of string

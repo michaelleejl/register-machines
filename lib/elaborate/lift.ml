@@ -16,6 +16,7 @@ let rename renamings registers (instruction : instruction) =
     | EAdd (r, l) -> LAdd (rename_register r, l)
     | ESub (r, l, l') -> LSub (rename_register r, l, l')
     | EHalt -> LHalt
+    | EExit -> LExit
     | EClear (r, k) -> LClear (rename_register r, k)
     | EJump k -> LJump k
     | EExecute { machine; arguments; next } ->

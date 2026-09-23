@@ -9,6 +9,7 @@ open Text.Located
 %token COLONEQUAL
 %token PLUS
 %token MINUS
+%token EXIT
 %token HALT
 %token COLON
 %token COMMA
@@ -93,6 +94,9 @@ instruction:
                  body = SSub (located $loc(r) r, located $loc(t) t, located $loc(f) f) } }
   | l=IDENT ; COLON ; HALT
       { Lang.Source.{ label = located $loc(l) l; body = SHalt } }
+  | l=IDENT ; COLON ; EXIT 
+      { Lang.Source.{ label = located $loc(l) l; body = SExit } }
+
   | l=IDENT ; COLON ; EXECUTE ; m=NAME ;
     LPAREN ; args = separated_list(COMMA, located(IDENT)) ; RPAREN ; ARROW ; k=IDENT
       { Lang.Source.{ label = located $loc(l) l;
