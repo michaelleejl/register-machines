@@ -1,3 +1,3 @@
 open Lang
 
-val program : Definitional.program -> Target.program
+val program : Named.program -> Target.program

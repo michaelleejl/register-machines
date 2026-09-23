@@ -1,4 +1,4 @@
-open Lang.Definitional
+open Lang.Named
 open Lang.Target
 
 module Var = struct
@@ -42,9 +42,9 @@ let translate registers labels instruction =
   let register r = Var.encode registers r in
   let label l = Var.encode labels l in
   match instruction.body with
-  | DAdd (r, t) -> TAdd (register r, label t)
-  | DSub (r, t, f) -> TSub (register r, label t, label f)
-  | DHalt -> THalt
+  | NAdd (r, t) -> TAdd (register r, label t)
+  | NSub (r, t, f) -> TSub (register r, label t, label f)
+  | NHalt -> THalt
 
 let rec program { registers; instructions } =
   let register_maps, register_values = extract_registers registers in

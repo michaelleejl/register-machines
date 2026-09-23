@@ -1,5 +1,5 @@
 open Lang
-open Definitional
+open Named
 open Target
 open Seq
 open Mode
@@ -25,7 +25,7 @@ let eval initial instructions =
   in
   go initial 0
 
-let run : type a. a mode -> Lang.Definitional.program -> int option -> a =
+let run : type a. a mode -> Lang.Named.program -> int option -> a =
  fun mode prog bound ->
   let ({ register_values; instructions; _ } as machine) =
     Elaborate.Resolve.program prog

@@ -1,3 +1,3 @@
 open Lang
 
-val program : Control.program -> Definitional.program
+val program : Control.program -> Named.program
