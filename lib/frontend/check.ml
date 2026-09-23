@@ -194,7 +194,7 @@ let erase_body = function
   | SAdd (r, l) -> ChAdd (r.v, l.v)
   | SSub (r, l, l') -> ChSub (r.v, l.v, l'.v)
   | SHalt -> ChHalt
-  | SExit -> ChExit 
+  | SExit -> ChExit
   | SExecute { machine; arguments; next } ->
       ChExecute
         {

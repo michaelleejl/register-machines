@@ -4,7 +4,7 @@ type body =
   | LAdd of string * string
   | LSub of string * string * string
   | LHalt
-  | LExit 
+  | LExit
   | LExecute of { machine : string; arguments : string list; next : string }
   | LClear of string * string
   | LJump of string

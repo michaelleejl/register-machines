@@ -19,7 +19,7 @@ let rec inline machines rename_label rename_register subst_halt { label; body }
       }
       :: acc
   | LHalt -> Lang.Control.{ label; body = subst_halt } :: acc
-  | LExit -> Lang.Control.{ label; body = CnHalt}::acc 
+  | LExit -> Lang.Control.{ label; body = CnHalt } :: acc
   | LClear (r, k) ->
       Lang.Control.{ label; body = CnClear (rename_register r, rename_label k) }
       :: acc

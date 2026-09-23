@@ -27,9 +27,7 @@ let eval initial instructions =
 
 let run : type a. a mode -> program -> int option -> a =
  fun mode prog bound ->
-  let ({ register_values; instructions; _ } as machine) =
-    prog
-  in
+  let ({ register_values; instructions; _ } as machine) = prog in
   let states = eval register_values instructions in
   let states =
     match bound with None -> states | Some b -> Seq.take (b + 1) states
