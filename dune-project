@@ -6,25 +6,21 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github michaelleejl/register-machines))
 
-(authors "Author Name <author@example.com>")
+(authors "Michael Lee <michael.lee@cl.cam.ac.uk>")
 
-(maintainers "Maintainer Name <maintainer@example.com>")
+(maintainers "Michael Lee <michael.lee@cl.cam.ac.uk>")
 
-(license LICENSE)
-
-(documentation https://url/to/documentation)
+(license MIT)
 
 (package
  (name register-machines)
- (synopsis "A short synopsis")
- (description "A longer description")
+ (synopsis "A compiler for register machines")
+ (description "A compiler for register machines for the University of Cambridge Part IB Computation Theory Course")
  (depends 
   (ocaml (>= 4.05.0)) 
   (menhir (>= 20260209))
-  (cmdliner (>= 2.1.1)))
- (tags
-  ("add topics" "to describe" your project)))
+  (cmdliner (>= 2.1.1))))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html
