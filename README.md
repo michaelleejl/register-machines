@@ -1,5 +1,5 @@
 # URM
-A language for writing register machines
+A compiler for register machines
 
 ### Installation Steps 
 1. Update opam (Installation instructions for opam may be found [here](https://opam.ocaml.org/doc/Install.html))
@@ -15,6 +15,7 @@ git clone https://github.com/michaelleejl/register-machines.git
 cd register-machines && opam switch create . --deps-only
 eval $(opam env)
 ```
+
 4. Build the project 
 ```shell 
 dune build
@@ -26,7 +27,9 @@ opam install .
 
 ### Running a Program 
 _If you chose to skip step 5, and do not have `urm` on PATH, 
-then replace `urm` with `dune exec -- urm`._
+then replace `urm` with `dune exec -- urm`. If you have 
+run step 5, and can't find the `urm` program, then 
+try running `eval $(opam env)`_
 
 The simplest way to run a program is like so (you can swap `programs/add.rm` for a program of your choice, various programs can be found in the `programs/` dir)
 ```shell
@@ -42,8 +45,14 @@ A `-b n` flag runs the program for `n` steps. Thus, intermediate
 states of nonterminating programs may be observed
 
 ```shell 
-urm -n 5 programs/nonterminating.rm
+urm -b 5 programs/nonterminating.rm
 ```
+
+The flags may be combined 
+```shell 
+urm -v -b 5 programs/nonterminating.rm
+```
+prints six rows (rows 0 to 5)
 
 ### Statement on tool usage 
 Pretty printing and error reporting are AI generated. 
