@@ -1,0 +1,26 @@
+machine Copy(d, s) = struct 
+  reg t
+  l0 : d- -> l0, l1 
+  l1 : s- -> l2, l4 
+  l2 : d+ -> l3 
+  l3 : t+ -> l1 
+  l4 : t- -> l5, l6
+  l5 : s+ -> l4 
+  l6 : halt
+end 
+
+machine Inc(d, s) = struct 
+  l0 : s- -> l1, l2
+  l1 : d+ -> l0 
+  l2 : halt 
+end 
+
+machine Loop(d, s, t) = Copy(t, s); Inc(d, t)
+
+machine Mul(z, x, y, t) = 
+  while x do Loop(z, y, t) done 
+
+reg r0, r1 := 3, r2 := 4, r3 
+
+l0 : execute Mul(r0, r1, r2, r3) -> l1
+l1 : halt
