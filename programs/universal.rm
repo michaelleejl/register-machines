@@ -1,0 +1,188 @@
+(* The universal register machine of the notes.
+
+   <<x, y>> defined as 2^x(2y+1)  
+   <x, y> for <<x, y>> - 1
+   
+   Lists [x0; x1; ...; xk] are encoded recursively 
+   encode <<[]>> = 0 
+   encode <<x::xs>> = <<x, encode xs>> 
+   
+   Instructions are encoded as 
+   encode halt = 0 
+   encode ri+ -> lj = <<2i, j>>
+   encode ri- -> lj, lk = <<2i+1, <j, k>>>
+    
+   A program is encoded as the list of its instructions. *)
+
+machine Copy(s, r) = struct
+  reg z
+
+  l0 : clear s -> l1
+  l1 : r- -> l2, l4
+  l2 : z+ -> l3
+  l3 : s+ -> l1
+  l4 : z- -> l5, l6
+  l5 : r+ -> l4
+  l6 : halt
+end
+
+machine Push(x, l) = struct
+  reg z
+
+  l0 : z+ -> l1
+  l1 : l- -> l2, l3
+  l2 : z+ -> l0
+  l3 : z- -> l4, l5
+  l4 : l+ -> l3
+  l5 : x- -> l1, l6
+  l6 : halt
+end
+
+machine Pop(x, l) = struct
+  reg z
+
+  l0 : clear x -> l1
+  l1 : l- -> l2, l3
+  l2 : l+ -> l4
+  l3 : exit
+  l4 : l- -> l5, l6
+  l5 : z+ -> l4
+  l6 : z- -> l8, l7
+  l7 : x+ -> l4
+  l8 : z- -> l9, l10
+  l9 : l+ -> l6
+  l10 : halt
+end
+
+reg r0           (*output*)
+reg p := 1544    (*code of the register machine to be simulated*)
+reg a := 0       (*current register contents*)
+reg pc           (*program counter – number of the current instruction (counting from 0)*)
+reg n            (*code of the current instruction body*)
+reg c            (*type of the current instruction body*)
+reg r            (*current value of the register to be incremented or decremented*)
+reg s            (*encoded reversed prefix [r(i-1); r(i-2); ...; r0]*)
+reg t, z         (*auxiliary registers*)
+
+(* INITIALISATION 
+   Precondition : register a contains the encoded r1...rk 
+   Postcondition: register a contains r0...rk, where r0 is set to 0 *)
+start      : execute Push(z, a) -> fetch          
+
+(* FETCH : Fetches the (encoded) next instruction
+   Precondition : register p contains the list of instructions 
+                  that make up the program, pc contains 
+                  the label of the next instruction
+   Postcondition: pc contains 0, n holds the encoded 
+                  next instruction to be executed *)
+fetch      : execute Copy(t, p) -> read           
+read       : execute Pop(n, t)  -> count, return  
+count      : pc-                -> read, decode
+
+(* DECODE : Decodes the encoded instruction 
+   Precondition : register n holds the encoded 
+                  next instruction to be executed.
+                  a holds an encoded list of registers 
+                  [r0; r1; ...; rk]
+   Postcondition: if the next instruction is HALT, 
+                  then registers are unchanged.
+                  Otherwise, let the instruction be 
+                  an increment/decrement of register i. 
+                  1. a holds an encoded suffix 
+                     [r(i+1); r(i+2); ...; rk]
+                  2. r holds ri 
+                  3. s holds an encoded reversed prefix 
+                     [r(i-1); r(i-2); ...; r0 ]
+                  4. n holds the encoded labels
+*)
+decode     : execute Pop(c, n) -> nextr, return 
+             (* Two cases: 
+                a. n = 0. then n encodes halt, and we return 
+                b. n > 0. then n is a list 
+                   [encoded_type; encoded_label(s)]
+                   we have just popped the encoded type 
+                   (inc/dec) into c. Recall that the encoded 
+                   type is either 2i, if we have to increment 
+                   register i, or 2i+1, if we have to decrement 
+                   register i *)
+nextr      : execute Pop(r, a) -> checkinc, checkinc 
+            (* r holds the head of the register list, 
+               a holds the tail. If c holds 
+               zero or one, then r holds the 
+               register to be modified, ri.
+               Otherwise, r holds some rj, j < i. *)
+checkinc   : c- -> checkdec, inc
+             (* If c is zero, then r holds 
+                the register to be modified.
+                Further, we would have taken an 
+                even number of decrements to reach 
+                the register, so we should increment ri *)
+checkdec   : c- -> saver, dec
+             (* If c is one, then we should decrement r *)
+saver      : execute Push(r, s) -> nextr             
+             (* If c is more than one, then 
+                r holds rj, j < i. We push r 
+                onto s, which maintains a reversed prefix,
+                and then look at r(j+1) *)
+
+(* INC : Performs an increment  
+   Precondition : 
+      The register to be incremented is ri. 
+      1. a holds an encoded suffix 
+         [r(i+1); r(i+2); ...; rk]
+      2. r holds ri 
+      3. s holds an encoded reversed prefix 
+         [r(i-1); r(i-2); ...; r0 ]
+      4. n holds the next label. 
+   Postcondition: 
+      1. r is incremented 
+      2. the PC holds the label of the next instruction 
+*)
+inc        : r+ -> setpc                          (* ri+ -> lj, where n is j *)
+setpc      : execute Copy(pc, n) -> restore       (* pc := n *)
+
+(* DEC : Performs a decrement  
+   Precondition : 
+      The register to be decremented is ri. 
+      1. a holds an encoded suffix 
+         [r(i+1); r(i+2); ...; rk]
+      2. r holds ri 
+      3. s holds an encoded reversed prefix 
+         [r(i-1); r(i-2); ...; r0 ]
+      4. n holds the encoded next labels <l1, l2>. 
+   Postcondition: 
+      1. r is decremented 
+      2. the PC holds the label of the next instruction 
+*)
+dec        : n+ -> target                         
+             (*n now holds the encoding of [l1; l2] *)
+target     : execute Pop(pc, n) -> trysetpc, trysetpc    
+             (* pc := l1; n := l2 *)
+trysetpc   : r- -> restore, setpc
+             (* if r > 0, then successfully set pc. 
+                otherwise, pc contains l1 when 
+                it should contain l2, so 
+                we have to setpc *)
+
+(* RESTORE : Puts the pieces back together 
+   Precondition : 
+      1. a holds an encoded suffix 
+         [r(i+1); r(i+2); ...; rk]
+      2. r holds the now modified 
+         register, ri'
+      3. s holds an encoded reversed prefix 
+         [r(i-1); r(i-2); ...; r0 ]
+      4. pc holds the correct next label. 
+   Postcondition :
+     1. a holds the encoded list 
+        [r0 ; r1 ; ... ; ri' ; ... ; rk]
+*)
+restore    : execute Push(r, a) -> unwind
+unwind     : execute Pop(r, s) -> restore, fetch
+
+(* RETURN : Returns the answer 
+   Precondition : a holds [r0; r1; ...; rk], whose head is the answer
+   Postcondition: r0 contains the answer, program halts
+*)
+return     : execute Pop(r0, a) -> stop, stop
+stop       : halt
