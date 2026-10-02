@@ -5,8 +5,8 @@ module StringMap = Map.Make (String)
 
 let qualify prefix name = if prefix = "" then name else prefix ^ "." ^ name
 
-let rec inline machines rename_label rename_register subst_halt { label; body }
-    acc =
+let rec inline machines rename_label rename_register subst_halt subst_exit
+    { label; body } acc =
   let open Control in
   let label = rename_label label in
   match body with
@@ -19,12 +19,12 @@ let rec inline machines rename_label rename_register subst_halt { label; body }
       }
       :: acc
   | LHalt -> Lang.Control.{ label; body = subst_halt } :: acc
-  | LExit -> Lang.Control.{ label; body = CnHalt } :: acc
+  | LExit -> Lang.Control.{ label; body = subst_exit } :: acc
   | LClear (r, k) ->
       Lang.Control.{ label; body = CnClear (rename_register r, rename_label k) }
       :: acc
   | LJump k -> Lang.Control.{ label; body = CnJump (rename_label k) } :: acc
-  | LExecute { machine = name; arguments; next } ->
+  | LExecute { machine = name; arguments; next; escape } ->
       let machine = StringMap.find name machines in
       let subst =
         StringMap.of_list
@@ -37,7 +37,12 @@ let rec inline machines rename_label rename_register subst_halt { label; body }
         | None -> rename_register r
       in
       let halt = CnJump (rename_label next) in
-      let f = inline machines rnm_l rnm_r halt in
+      let exit =
+        match escape with
+        | Some label -> CnJump (rename_label label)
+        | None -> subst_exit
+      in
+      let f = inline machines rnm_l rnm_r halt exit in
       let entry = rnm_l (List.hd machine.instructions).label in
       { label; body = CnJump entry }
       :: List.fold_right f machine.instructions acc
@@ -61,5 +66,7 @@ let program ({ machines; registers; instructions } : program) =
     {
       registers;
       instructions =
-        List.fold_right (inline machines Fun.id Fun.id CnHalt) instructions [];
+        List.fold_right
+          (inline machines Fun.id Fun.id CnHalt CnHalt)
+          instructions [];
     }

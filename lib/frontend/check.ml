@@ -5,7 +5,7 @@ open Source
 module StringMap = Map.Make (String)
 
 type _ kind =
-  | Machine : (string * int) located kind
+  | Machine : (string * int * Text.Span.t option) located kind
   | Register : string located kind
   | Label : string located kind
   | Argument : string located kind
@@ -37,6 +37,8 @@ type error =
       first : Text.Span.t;
       name : string;
     }
+  | Missing_exit of { at : Text.Span.t; machine : string; exit : Text.Span.t }
+  | Needless_exit of { at : Text.Span.t; machine : string }
 
 exception Error of error
 
@@ -116,6 +118,20 @@ let report : error -> Report.t = function
         label = { at; text = Printf.sprintf "%d given here" given };
         notes = [];
       }
+  | Missing_exit { at; machine; exit } ->
+      {
+        summary =
+          Printf.sprintf "%s can exit, so this call needs a second label"
+            machine;
+        label = { at; text = "say where an exit goes" };
+        notes = [ { at = exit; text = "exits here" } ];
+      }
+  | Needless_exit { at; machine } ->
+      {
+        summary = Printf.sprintf "%s never exits" machine;
+        label = { at; text = "remove this label" };
+        notes = [];
+      }
   | Repeated_argument { at; first; name } ->
       {
         summary = Printf.sprintf "%s is passed twice" name;
@@ -126,7 +142,7 @@ let report : error -> Report.t = function
 let () = Report.register (function Error e -> Some (report e) | _ -> None)
 
 module Scope = struct
-  type signature = { arity : int; at : Text.Span.t }
+  type signature = { arity : int; at : Text.Span.t; exits : Text.Span.t option }
 
   type scope = {
     machines : signature StringMap.t;
@@ -152,13 +168,14 @@ module Scope = struct
 
   let add : type a. a kind -> scope -> a -> scope = function
     | Machine -> (
-        fun scope { v = name, arity; at } ->
+        fun scope { v = name, arity, exits; at } ->
           match StringMap.find_opt name scope.machines with
           | Some { at = first; _ } -> duplicate Machine name at first
           | None ->
               {
                 scope with
-                machines = StringMap.add name { arity; at } scope.machines;
+                machines =
+                  StringMap.add name { arity; at; exits } scope.machines;
               })
     | Label -> (
         fun scope { v; at } ->
@@ -188,6 +205,8 @@ module Scope = struct
   let label scope name = ignore (find Label scope.labels name)
 end
 
+let either first second = match first with Some _ -> first | None -> second
+
 let erase_string (r : string located) = r.v
 
 let erase_body = function
@@ -195,12 +214,13 @@ let erase_body = function
   | SSub (r, l, l') -> ChSub (r.v, l.v, l'.v)
   | SHalt -> ChHalt
   | SExit -> ChExit
-  | SExecute { machine; arguments; next } ->
+  | SExecute { machine; arguments; next; escape } ->
       ChExecute
         {
           machine = machine.v;
           arguments = List.map erase_string arguments;
           next = next.v;
+          escape = Option.map erase_string escape;
         }
   | SClear (r, k) -> ChClear (r.v, k.v)
   | SJump k -> ChJump k.v
@@ -246,6 +266,17 @@ let erase (p : Source.program) : Checked.program =
 
 let acc c xs i = List.fold_left c i xs
 
+
+let is_exit { label; body } =
+  match body with SExit -> Some label.at | _ -> None
+
+let rec find_exit scope = function
+  | SStruct { instructions; _ } -> List.find_map is_exit instructions
+  | SApply { name; _ } -> (Scope.machine scope name).exits
+  | SSeq (d1, d2) -> either (find_exit scope d1) (find_exit scope d2)
+  | SIf (_, d1, d2) -> either (find_exit scope d1) (find_exit scope d2)
+  | SWhile (_, d) -> find_exit scope d
+
 let rec check ({ registers; instructions; _ } as p) =
   check_top_level_registers p;
   check_program (fun (r : Source.register) -> r.name) Scope.empty p;
@@ -271,7 +302,11 @@ and check_machine scope { name; parameters; definition } =
     List.fold_left (Scope.add Register) (Scope.enter scope) parameters
   in
   check_definition scope' definition;
-  Scope.add Machine scope { v = (name.v, List.length parameters); at = name.at }
+  Scope.add Machine scope
+    {
+      v = (name.v, List.length parameters, find_exit scope definition);
+      at = name.at;
+    }
 
 and check_definition scope = function
   | SStruct b -> check_program Fun.id scope b
@@ -308,9 +343,20 @@ and check_body scope body =
       Scope.register scope r;
       Scope.label scope k
   | SJump k -> Scope.label scope k
-  | SExecute { machine; arguments; next } ->
+  | SExecute { machine; arguments; next; escape } ->
       check_call scope machine arguments;
-      Scope.label scope next
+      Scope.label scope next;
+      check_exit scope machine escape
+
+and check_exit scope machine escape =
+  match ((Scope.machine scope machine).exits, escape) with
+  | Some exit, None ->
+      raise
+        (Error (Missing_exit { at = machine.at; machine = machine.v; exit }))
+  | None, Some label ->
+      raise (Error (Needless_exit { at = label.at; machine = machine.v }))
+  | Some _, Some label -> Scope.label scope label
+  | None, None -> ()
 
 and check_call scope machine arguments =
   check_arity scope machine arguments;

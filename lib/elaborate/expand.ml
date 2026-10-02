@@ -7,8 +7,8 @@ let translate_body = function
   | ChSub (r, k1, k2) -> ESub (r, k1, k2)
   | ChHalt -> EHalt
   | ChExit -> EExit
-  | ChExecute { machine; arguments; next } ->
-      EExecute { machine; arguments; next }
+  | ChExecute { machine; arguments; next; escape } ->
+      EExecute { machine; arguments; next; escape }
   | ChClear (r, k) -> EClear (r, k)
   | ChJump k -> EJump k
 
@@ -33,7 +33,8 @@ and expand_definition parameters = function
           [
             {
               label = "_l0";
-              body = EExecute { machine; arguments; next = "_l1" };
+              body =
+                EExecute { machine; arguments; next = "_l1"; escape = None };
             };
             { label = "_l1"; body = EHalt };
           ];
@@ -66,13 +67,23 @@ and expand_definition parameters = function
               label = "_l0";
               body =
                 EExecute
-                  { machine = first; arguments = parameters; next = "_l1" };
+                  {
+                    machine = first;
+                    arguments = parameters;
+                    next = "_l1";
+                    escape = None;
+                  };
             };
             {
               label = "_l1";
               body =
                 EExecute
-                  { machine = second; arguments = parameters; next = "_l2" };
+                  {
+                    machine = second;
+                    arguments = parameters;
+                    next = "_l2";
+                    escape = None;
+                  };
             };
             { label = "_l2"; body = EHalt };
           ];
@@ -106,13 +117,23 @@ and expand_definition parameters = function
               label = "_l1";
               body =
                 EExecute
-                  { machine = tbranch; arguments = parameters; next = "_l3" };
+                  {
+                    machine = tbranch;
+                    arguments = parameters;
+                    next = "_l3";
+                    escape = None;
+                  };
             };
             {
               label = "_l2";
               body =
                 EExecute
-                  { machine = ebranch; arguments = parameters; next = "_l3" };
+                  {
+                    machine = ebranch;
+                    arguments = parameters;
+                    next = "_l3";
+                    escape = None;
+                  };
             };
             { label = "_l3"; body = EHalt };
           ];
@@ -133,7 +154,12 @@ and expand_definition parameters = function
               label = "_l1";
               body =
                 EExecute
-                  { machine = name; arguments = parameters; next = "_l0" };
+                  {
+                    machine = name;
+                    arguments = parameters;
+                    next = "_l0";
+                    escape = None;
+                  };
             };
             { label = "_l2"; body = EHalt };
           ];

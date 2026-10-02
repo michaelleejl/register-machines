@@ -5,7 +5,12 @@ type body =
   | LSub of string * string * string
   | LHalt
   | LExit
-  | LExecute of { machine : string; arguments : string list; next : string }
+  | LExecute of {
+      machine : string;
+      arguments : string list;
+      next : string;
+      escape : string option;
+    }
   | LClear of string * string
   | LJump of string
 

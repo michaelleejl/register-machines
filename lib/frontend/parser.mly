@@ -98,11 +98,13 @@ instruction:
       { Lang.Source.{ label = located $loc(l) l; body = SExit } }
 
   | l=IDENT ; COLON ; EXECUTE ; m=NAME ;
-    LPAREN ; args = separated_list(COMMA, located(IDENT)) ; RPAREN ; ARROW ; k=IDENT
+    LPAREN ; args = separated_list(COMMA, located(IDENT)) ; RPAREN ; ARROW ; k=IDENT ;
+    e = option(preceded(COMMA, located(IDENT)))
       { Lang.Source.{ label = located $loc(l) l;
                  body = SExecute { machine = located $loc(m) m;
                                    arguments = args;
-                                   next = located $loc(k) k } } }
+                                   next = located $loc(k) k;
+                                   escape = e } } }
   | l=IDENT ; COLON ; CLEAR ; r=IDENT ; ARROW ; k=IDENT
       { Lang.Source.{ label = located $loc(l) l;
                  body = SClear (located $loc(r) r, located $loc(k) k) } }

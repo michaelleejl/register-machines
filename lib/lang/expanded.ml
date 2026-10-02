@@ -5,7 +5,12 @@ type body =
   | ESub of string * string * string
   | EHalt
   | EExit
-  | EExecute of { machine : string; arguments : string list; next : string }
+  | EExecute of {
+      machine : string;
+      arguments : string list;
+      next : string;
+      escape : string option;
+    }
   | EClear of string * string
   | EJump of string
 

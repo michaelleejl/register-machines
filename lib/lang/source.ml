@@ -9,6 +9,7 @@ type body =
       machine : string located;
       arguments : string located list;
       next : string located;
+      escape : string located option;
     }
   | SClear of string located * string located
   | SJump of string located

@@ -3,7 +3,12 @@ type body =
   | ChSub of string * string * string
   | ChHalt
   | ChExit
-  | ChExecute of { machine : string; arguments : string list; next : string }
+  | ChExecute of {
+      machine : string;
+      arguments : string list;
+      next : string;
+      escape : string option;
+    }
   | ChClear of string * string
   | ChJump of string
 
