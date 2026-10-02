@@ -21,8 +21,8 @@ let file = Arg.(required & pos 0 (some file) None & info [] ~docv:"FILE")
 
 let output bound verbose encode program =
   if encode then
-    let instructions, registers = Encode.program program in
-    Printf.printf "Instructions:%d\nRegisters:%d\n" instructions registers
+    let registers, instructions = Encode.program program in
+    Printf.printf "Registers:%d\nInstructions:%d\n" registers instructions
   else if verbose then
     let machine, traced = Interpret.run Trace program bound in
     Table.all machine traced |> Table.to_string |> print_string
