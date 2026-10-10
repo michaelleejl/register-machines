@@ -26,7 +26,7 @@ rule token = parse
   | "exit"                      { EXIT }
   | "halt"                      { HALT }
   | "machine"                   { MACHINE }
-  | "execute"                   { EXECUTE }
+  | "call"                      { CALL }
   | "struct"                    { STRUCT }
   | "end"                       { END }
   | "done"                      { DONE }

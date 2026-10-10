@@ -14,7 +14,7 @@ open Text.Located
 %token COLON
 %token COMMA
 %token MACHINE
-%token EXECUTE
+%token CALL
 %token CLEAR
 %token JUMP
 %token STRUCT
@@ -97,11 +97,11 @@ instruction:
   | l=IDENT ; COLON ; EXIT 
       { Lang.Source.{ label = located $loc(l) l; body = SExit } }
 
-  | l=IDENT ; COLON ; EXECUTE ; m=NAME ;
+  | l=IDENT ; COLON ; CALL ; m=NAME ;
     LPAREN ; args = separated_list(COMMA, located(IDENT)) ; RPAREN ; ARROW ; k=IDENT ;
     e = option(preceded(COMMA, located(IDENT)))
       { Lang.Source.{ label = located $loc(l) l;
-                 body = SExecute { machine = located $loc(m) m;
+                 body = SCall { machine = located $loc(m) m;
                                    arguments = args;
                                    next = located $loc(k) k;
                                    escape = e } } }

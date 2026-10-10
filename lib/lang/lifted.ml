@@ -5,7 +5,7 @@ type body =
   | LSub of string * string * string
   | LHalt
   | LExit
-  | LExecute of {
+  | LCall of {
       machine : string;
       arguments : string list;
       next : string;

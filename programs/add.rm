@@ -7,5 +7,5 @@ machine Add(z, x, y) = struct
 end 
 
 reg r0, r1 := 3, r2 := 1
-l0 : execute Add(r0, r1, r2) -> l1
+l0 : call Add(r0, r1, r2) -> l1
 l1 : halt

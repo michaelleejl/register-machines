@@ -12,5 +12,5 @@ machine Copy(d, s) = struct
 end 
 
 reg r0,r1:=6
-l0 : execute Copy(r0, r1) -> l1
+l0 : call Copy(r0, r1) -> l1
 l1 : halt

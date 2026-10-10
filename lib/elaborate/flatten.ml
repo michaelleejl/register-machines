@@ -24,7 +24,7 @@ let rec inline machines rename_label rename_register subst_halt subst_exit
       Lang.Control.{ label; body = CnClear (rename_register r, rename_label k) }
       :: acc
   | LJump k -> Lang.Control.{ label; body = CnJump (rename_label k) } :: acc
-  | LExecute { machine = name; arguments; next; escape } ->
+  | LCall { machine = name; arguments; next; escape } ->
       let machine = StringMap.find name machines in
       let subst =
         StringMap.of_list

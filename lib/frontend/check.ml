@@ -214,8 +214,8 @@ let erase_body = function
   | SSub (r, l, l') -> ChSub (r.v, l.v, l'.v)
   | SHalt -> ChHalt
   | SExit -> ChExit
-  | SExecute { machine; arguments; next; escape } ->
-      ChExecute
+  | SCall { machine; arguments; next; escape } ->
+      ChCall
         {
           machine = machine.v;
           arguments = List.map erase_string arguments;
@@ -343,7 +343,7 @@ and check_body scope body =
       Scope.register scope r;
       Scope.label scope k
   | SJump k -> Scope.label scope k
-  | SExecute { machine; arguments; next; escape } ->
+  | SCall { machine; arguments; next; escape } ->
       check_call scope machine arguments;
       Scope.label scope next;
       check_exit scope machine escape

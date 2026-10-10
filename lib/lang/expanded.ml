@@ -5,7 +5,7 @@ type body =
   | ESub of string * string * string
   | EHalt
   | EExit
-  | EExecute of {
+  | ECall of {
       machine : string;
       arguments : string list;
       next : string;

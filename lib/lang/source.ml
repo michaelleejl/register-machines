@@ -5,7 +5,7 @@ type body =
   | SSub of string located * string located * string located
   | SHalt
   | SExit
-  | SExecute of {
+  | SCall of {
       machine : string located;
       arguments : string located list;
       next : string located;

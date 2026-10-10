@@ -3,7 +3,7 @@ type body =
   | ChSub of string * string * string
   | ChHalt
   | ChExit
-  | ChExecute of {
+  | ChCall of {
       machine : string;
       arguments : string list;
       next : string;

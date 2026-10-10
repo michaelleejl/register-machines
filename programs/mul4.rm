@@ -22,5 +22,5 @@ machine Mul(z, x, y, t) =
 
 reg r0, r1 := 3, r2 := 4, r3 
 
-l0 : execute Mul(r0, r1, r2, r3) -> l1
+l0 : call Mul(r0, r1, r2, r3) -> l1
 l1 : halt

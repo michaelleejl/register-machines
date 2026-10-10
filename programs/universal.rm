@@ -56,7 +56,7 @@ end
 
 reg r0           (*output*)
 reg p := 1544    (*code of the register machine to be simulated*)
-reg a := 0       (*current register contents*)
+reg a := 1       (*current register contents*)
 reg pc           (*program counter – number of the current instruction (counting from 0)*)
 reg n            (*code of the current instruction body*)
 reg c            (*type of the current instruction body*)
@@ -67,7 +67,7 @@ reg t, z         (*auxiliary registers*)
 (* INITIALISATION 
    Precondition : register a contains the encoded r1...rk 
    Postcondition: register a contains r0...rk, where r0 is set to 0 *)
-start      : execute Push(z, a) -> fetch          
+start      : call Push(z, a) -> fetch          
 
 (* FETCH : Fetches the (encoded) next instruction
    Precondition : register p contains the list of instructions 
@@ -75,8 +75,8 @@ start      : execute Push(z, a) -> fetch
                   the label of the next instruction
    Postcondition: pc contains 0, n holds the encoded 
                   next instruction to be executed *)
-fetch      : execute Copy(t, p) -> read           
-read       : execute Pop(n, t)  -> count, return  
+fetch      : call Copy(t, p) -> read           
+read       : call Pop(n, t)  -> count, return  
 count      : pc-                -> read, decode
 
 (* DECODE : Decodes the encoded instruction 
@@ -95,7 +95,7 @@ count      : pc-                -> read, decode
                      [r(i-1); r(i-2); ...; r0 ]
                   4. n holds the encoded labels
 *)
-decode     : execute Pop(c, n) -> nextr, return 
+decode     : call Pop(c, n) -> nextr, return 
              (* Two cases: 
                 a. n = 0. then n encodes halt, and we return 
                 b. n > 0. then n is a list 
@@ -105,7 +105,7 @@ decode     : execute Pop(c, n) -> nextr, return
                    type is either 2i, if we have to increment 
                    register i, or 2i+1, if we have to decrement 
                    register i *)
-nextr      : execute Pop(r, a) -> checkinc, checkinc 
+nextr      : call Pop(r, a) -> checkinc, checkinc 
             (* r holds the head of the register list, 
                a holds the tail. If c holds 
                zero or one, then r holds the 
@@ -119,7 +119,7 @@ checkinc   : c- -> checkdec, inc
                 the register, so we should increment ri *)
 checkdec   : c- -> saver, dec
              (* If c is one, then we should decrement r *)
-saver      : execute Push(r, s) -> nextr             
+saver      : call Push(r, s) -> nextr             
              (* If c is more than one, then 
                 r holds rj, j < i. We push r 
                 onto s, which maintains a reversed prefix,
@@ -139,7 +139,7 @@ saver      : execute Push(r, s) -> nextr
       2. the PC holds the label of the next instruction 
 *)
 inc        : r+ -> setpc                          (* ri+ -> lj, where n is j *)
-setpc      : execute Copy(pc, n) -> restore       (* pc := n *)
+setpc      : call Copy(pc, n) -> restore       (* pc := n *)
 
 (* DEC : Performs a decrement  
    Precondition : 
@@ -156,7 +156,7 @@ setpc      : execute Copy(pc, n) -> restore       (* pc := n *)
 *)
 dec        : n+ -> target                         
              (*n now holds the encoding of [l1; l2] *)
-target     : execute Pop(pc, n) -> trysetpc, trysetpc    
+target     : call Pop(pc, n) -> trysetpc, trysetpc    
              (* pc := l1; n := l2 *)
 trysetpc   : r- -> restore, setpc
              (* if r > 0, then successfully set pc. 
@@ -177,12 +177,12 @@ trysetpc   : r- -> restore, setpc
      1. a holds the encoded list 
         [r0 ; r1 ; ... ; ri' ; ... ; rk]
 *)
-restore    : execute Push(r, a) -> unwind
-unwind     : execute Pop(r, s) -> restore, fetch
+restore    : call Push(r, a) -> unwind
+unwind     : call Pop(r, s) -> restore, fetch
 
 (* RETURN : Returns the answer 
    Precondition : a holds [r0; r1; ...; rk], whose head is the answer
    Postcondition: r0 contains the answer, program halts
 *)
-return     : execute Pop(r0, a) -> stop, stop
+return     : call Pop(r0, a) -> stop, stop
 stop       : halt

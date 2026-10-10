@@ -20,5 +20,5 @@ machine Loop(d, s, t) = Copy(t, s); Inc(d, t)
 reg r0, r1 := 3, r2 := 4, r3 
 
 l0 : r1- -> l1, l2
-l1 : execute Loop(r0, r2, r3) -> l0
+l1 : call Loop(r0, r2, r3) -> l0
 l2 : halt

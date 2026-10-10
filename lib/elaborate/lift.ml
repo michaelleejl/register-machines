@@ -19,13 +19,13 @@ let rename renamings registers (instruction : instruction) =
     | EExit -> LExit
     | EClear (r, k) -> LClear (rename_register r, k)
     | EJump k -> LJump k
-    | EExecute { machine; arguments; next; escape } ->
+    | ECall { machine; arguments; next; escape } ->
         let machine =
           match StringMap.find_opt machine renamings with
           | Some path -> path
           | None -> failwith ("lift: " ^ machine ^ " is not in scope")
         in
-        LExecute
+        LCall
           {
             machine;
             arguments = List.map rename_register arguments;

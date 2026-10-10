@@ -7,8 +7,8 @@ let translate_body = function
   | ChSub (r, k1, k2) -> ESub (r, k1, k2)
   | ChHalt -> EHalt
   | ChExit -> EExit
-  | ChExecute { machine; arguments; next; escape } ->
-      EExecute { machine; arguments; next; escape }
+  | ChCall { machine; arguments; next; escape } ->
+      ECall { machine; arguments; next; escape }
   | ChClear (r, k) -> EClear (r, k)
   | ChJump k -> EJump k
 
@@ -33,8 +33,7 @@ and expand_definition parameters = function
           [
             {
               label = "_l0";
-              body =
-                EExecute { machine; arguments; next = "_l1"; escape = None };
+              body = ECall { machine; arguments; next = "_l1"; escape = None };
             };
             { label = "_l1"; body = EHalt };
           ];
@@ -66,7 +65,7 @@ and expand_definition parameters = function
             {
               label = "_l0";
               body =
-                EExecute
+                ECall
                   {
                     machine = first;
                     arguments = parameters;
@@ -77,7 +76,7 @@ and expand_definition parameters = function
             {
               label = "_l1";
               body =
-                EExecute
+                ECall
                   {
                     machine = second;
                     arguments = parameters;
@@ -116,7 +115,7 @@ and expand_definition parameters = function
             {
               label = "_l1";
               body =
-                EExecute
+                ECall
                   {
                     machine = tbranch;
                     arguments = parameters;
@@ -127,7 +126,7 @@ and expand_definition parameters = function
             {
               label = "_l2";
               body =
-                EExecute
+                ECall
                   {
                     machine = ebranch;
                     arguments = parameters;
@@ -153,7 +152,7 @@ and expand_definition parameters = function
             {
               label = "_l1";
               body =
-                EExecute
+                ECall
                   {
                     machine = name;
                     arguments = parameters;
